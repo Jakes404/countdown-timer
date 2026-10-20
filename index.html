@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AHMP Aftelhorlosie</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23155A9E'/%3E%3Cpath d='M13 4.5h6' stroke='%23F067AF' stroke-width='2.8' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='18' r='9' fill='none' stroke='white' stroke-width='2.8'/%3E%3Cpath d='M16 13v5l3.2 2' fill='none' stroke='white' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -15,12 +16,12 @@
       --blue-dark: #0e4278;
       --blue-light: #e8f0f9;
       --blue-border: #7aadd4;
-      --purple: #F067AF;
-      --purple-dark: #d44d96;
-      --purple-light: #fef0f7;
-      --purple-border: #f7aed8;
-      --purple-soft: #fde3f1;
-      --purple-btn: #f49ccc;
+      --pink: #F067AF;
+      --pink-dark: #d44d96;
+      --pink-light: #fef0f7;
+      --pink-border: #f7aed8;
+      --pink-soft: #fde3f1;
+      --pink-btn: #f49ccc;
       --green: #22c55e;
       --orange: #f97316;
       --red: #ef4444;
@@ -53,6 +54,26 @@
       transition: background 0.3s;
     }
 
+    button:focus-visible, input:focus-visible {
+      outline: 3px solid var(--blue-border);
+      outline-offset: 2px;
+    }
+
+    .icon {
+      width: 1em;
+      height: 1em;
+      flex-shrink: 0;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
     /* ── Normal view wrapper ── */
     #app {
       width: 100%;
@@ -60,6 +81,49 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+    }
+
+    /* Clock area: a size container so the clocks scale with its width */
+    .stage {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      container-type: inline-size;
+    }
+
+    .sidebar { width: 100%; }
+
+    /* Wide screens: clock on the left, settings beside it on the right */
+    @media (min-width: 1000px) {
+      body { padding: 28px 40px 40px; }
+
+      #app {
+        max-width: 1600px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 400px;
+        grid-template-areas: "top top" "stage side";
+        column-gap: 48px;
+        align-items: start;
+      }
+      .top-bar { grid-area: top; }
+      .stage {
+        grid-area: stage;
+        min-height: calc(100vh - 120px);
+        justify-content: center;
+      }
+      .stage-divider { display: none; }
+      .sidebar {
+        grid-area: side;
+        position: sticky;
+        top: 20px;
+        max-height: calc(100vh - 110px);
+        overflow-y: auto;
+        padding: 2px 6px 2px 2px;
+      }
+      .sidebar #settings { align-items: stretch; }
+      .sidebar .presets { justify-content: flex-start; }
+      #subject-input { max-width: 720px; }
     }
 
     /* ── Top bar ── */
@@ -89,9 +153,17 @@
       font-size: 17px;
       color: var(--gray-500);
       line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-body);
       transition: border-color 0.15s, color 0.15s;
     }
     .icon-btn:hover { border-color: var(--gray-400); color: var(--gray-800); }
+
+    /* Reset needs a second click while a timer is running */
+    #reset-btn .reset-text { font-size: 13px; font-weight: 700; }
+    #reset-btn.armed { border-color: var(--red); color: var(--red); }
 
     /* ── Subject input ── */
     #subject-input {
@@ -122,7 +194,7 @@
       letter-spacing: 0.02em;
       transition: color 0.3s;
     }
-    #phase-label.reading { color: var(--purple); }
+    #phase-label.reading { color: var(--pink); }
 
     /* ── BIG CLOCK ── */
     #clock {
@@ -135,24 +207,91 @@
       margin: 4px 0 10px;
       user-select: none;
       text-align: center;
-      transition: color 0.4s, font-size 0.3s;
+      transition: color 0.4s;
       font-size: clamp(80px, 22vw, 190px);
+      font-size: clamp(80px, 32cqi, 340px);
     }
-    #clock.reading { color: var(--purple); }
+    /* h:mm:ss needs a smaller size to fit the same width */
+    #clock.long { font-size: clamp(64px, 24cqi, 260px); }
+    #clock.reading { color: var(--pink); }
     #clock.low { color: var(--orange); }
     #clock.very-low, #clock.done { color: var(--red); }
     #clock.done { font-size: clamp(32px, 8vw, 72px); letter-spacing: -1px; }
 
-    /* ── Sub reading info ── */
+    /* ── Sub line under the clock ── */
     #reading-sub {
       font-size: 14px;
       color: var(--gray-400);
       margin-bottom: 8px;
       display: none;
+      text-align: center;
     }
     #reading-sub.idle-breakdown {
-      color: var(--purple);
+      color: var(--pink);
       font-weight: 600;
+    }
+
+    /* Time warnings (30 / 15 / 5 min left) */
+    .warn {
+      color: var(--orange) !important;
+      font-weight: 700;
+      animation: warn-pulse 1s ease-in-out infinite;
+    }
+    @keyframes warn-pulse {
+      50% { opacity: 0.45; }
+    }
+
+    /* ── Group cards (two groups side by side) ── */
+    .cards {
+      display: none;
+      width: 100%;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 4px 0 14px;
+    }
+    .cards.visible { display: grid; }
+
+    .card {
+      border: 2px solid var(--gray-200);
+      border-radius: 14px;
+      padding: 14px 10px;
+      text-align: center;
+      min-width: 0;
+    }
+
+    .card-name {
+      font-size: clamp(14px, 2.4vw, 18px);
+      font-weight: 700;
+      color: var(--gray-800);
+      overflow-wrap: anywhere;
+    }
+
+    .card-clock {
+      font-family: var(--font-display);
+      font-feature-settings: var(--font-feature-clock);
+      font-weight: 900;
+      color: var(--blue);
+      line-height: 1;
+      letter-spacing: -2px;
+      margin: 8px 0 6px;
+      user-select: none;
+      transition: color 0.4s;
+      font-size: clamp(40px, 10vw, 72px);
+      font-size: clamp(40px, 12cqi, 160px);
+    }
+    .card-clock.low { color: var(--orange); }
+    .card-clock.very-low, .card-clock.done { color: var(--red); }
+    .card-clock.done { font-size: clamp(22px, 5vw, 36px); letter-spacing: -0.5px; padding: 8px 0; }
+
+    .card-sub {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-500);
+      min-height: 20px;
+    }
+
+    @media (max-width: 520px) {
+      .cards { grid-template-columns: 1fr; }
     }
 
     /* ── Controls row ── */
@@ -176,6 +315,9 @@
       font-family: var(--font-body);
       transition: background 0.2s, opacity 0.2s;
       letter-spacing: 0.01em;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
     }
     #start-btn.paused { background: var(--gray-800); }
     #start-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -185,6 +327,34 @@
       border: none;
       border-top: 1px solid var(--gray-100);
       margin: 0 0 18px 0;
+    }
+
+    /* ── Settings (locked while a timer has started) ── */
+    #settings {
+      border: none;
+      min-width: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #settings:disabled button,
+    #settings:disabled input {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    #locked-hint {
+      width: 100%;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-500);
+      background: var(--gray-50);
+      border: 2px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 18px;
+      text-align: center;
     }
 
     /* ── Section label ── */
@@ -233,6 +403,7 @@
       gap: 8px;
       align-items: center;
       margin-bottom: 22px;
+      flex-wrap: wrap;
     }
 
     .custom-input {
@@ -262,8 +433,8 @@
     }
     .set-btn:hover { background: var(--blue-dark); }
 
-    /* ── Reading panel ── */
-    #reading-panel {
+    /* ── Option panels (reading time, second group) ── */
+    .panel {
       width: 100%;
       background: var(--gray-50);
       border: 2px solid var(--gray-200);
@@ -271,29 +442,39 @@
       padding: 16px 20px;
       transition: all 0.25s;
     }
+    .panel + .panel { margin-top: 14px; }
     #reading-panel.enabled {
-      background: var(--purple-light);
-      border-color: var(--purple-border);
+      background: var(--pink-light);
+      border-color: var(--pink-border);
+    }
+    #group-panel.enabled {
+      background: var(--blue-light);
+      border-color: var(--blue-border);
     }
 
+    /* Toggle switch: one button with role="switch" */
     .toggle-row {
       display: flex;
       align-items: center;
       gap: 12px;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-family: var(--font-body);
+      text-align: left;
+      border-radius: 8px;
     }
 
-    /* CSS toggle switch */
     .toggle-track {
       width: 44px;
       height: 24px;
       border-radius: 99px;
       background: var(--gray-300);
       position: relative;
-      cursor: pointer;
       flex-shrink: 0;
       transition: background 0.2s;
     }
-    .toggle-track.on { background: var(--purple); }
     .toggle-thumb {
       width: 18px;
       height: 18px;
@@ -305,24 +486,31 @@
       transition: left 0.2s;
       box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
-    .toggle-track.on .toggle-thumb { left: 23px; }
+    .toggle-row[aria-checked="true"] .toggle-thumb { left: 23px; }
 
     .toggle-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       font-size: 15px;
       font-weight: 700;
       color: var(--gray-600);
-      cursor: pointer;
       transition: color 0.2s;
     }
-    .toggle-label.on { color: var(--purple-dark); }
 
-    #reading-body { display: none; margin-top: 14px; }
-    #reading-body.visible { display: block; }
+    #reading-toggle[aria-checked="true"] .toggle-track { background: var(--pink); }
+    #reading-toggle[aria-checked="true"] .toggle-label { color: var(--pink-dark); }
+    #group-toggle[aria-checked="true"] .toggle-track { background: var(--blue); }
+    #group-toggle[aria-checked="true"] .toggle-label { color: var(--blue-dark); }
 
-    #reading-hint {
-      font-size: 13px;
-      color: var(--purple);
-      margin-bottom: 10px;
+    .panel-body { display: none; margin-top: 14px; }
+    .panel-body.visible { display: block; }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
     }
 
     .reading-presets {
@@ -345,28 +533,29 @@
       transition: all 0.15s;
     }
     .reading-preset-btn.active {
-      background: var(--purple-soft);
-      color: var(--purple-dark);
-      border-color: var(--purple-btn);
+      background: var(--pink-soft);
+      color: var(--pink-dark);
+      border-color: var(--pink-btn);
     }
 
     .reading-custom-row {
       display: flex;
       gap: 8px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .reading-custom-input {
       padding: 8px 14px;
       font-size: 13px;
       border-radius: 8px;
-      border: 2px solid var(--purple-border);
+      border: 2px solid var(--pink-border);
       outline: none;
       width: 165px;
       font-family: var(--font-body);
       color: var(--gray-900);
     }
-    .reading-custom-input:focus { border-color: var(--purple); }
+    .reading-custom-input:focus { border-color: var(--pink); }
 
     .reading-set-btn {
       padding: 8px 14px;
@@ -375,14 +564,40 @@
       border-radius: 8px;
       border: none;
       cursor: pointer;
-      background: var(--purple);
+      background: var(--pink);
       color: white;
       font-family: var(--font-body);
     }
 
     #reading-display {
       font-size: 13px;
-      color: var(--purple);
+      color: var(--pink);
+      font-weight: 700;
+    }
+
+    /* Second group panel */
+    #group-name-input {
+      width: 100%;
+      max-width: 340px;
+      padding: 9px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 2px solid var(--blue-border);
+      outline: none;
+      font-family: var(--font-body);
+      color: var(--gray-900);
+      margin-bottom: 12px;
+      display: block;
+    }
+    #group-name-input:focus { border-color: var(--blue); }
+
+    #group-panel .presets { justify-content: flex-start; }
+    #group-panel .custom-row { margin-bottom: 0; }
+
+    #group-display {
+      font-size: 13px;
+      color: var(--blue-dark);
       font-weight: 700;
     }
 
@@ -401,6 +616,7 @@
       transition: background 0.3s;
     }
     #fullscreen-overlay.active { display: flex; }
+    #fullscreen-overlay.idle { cursor: none; }
 
     /* Date — always visible in fullscreen */
     #fs-topbar {
@@ -437,6 +653,9 @@
       transition: border-color 0.15s, color 0.15s, opacity 0.5s ease;
       pointer-events: auto;
       opacity: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     #fs-exit-btn.hidden {
       opacity: 0;
@@ -463,7 +682,7 @@
       transition: color 0.3s;
       font-family: var(--font-body);
     }
-    #fs-phase.reading { color: var(--purple); }
+    #fs-phase.reading { color: var(--pink); }
 
     #fs-clock {
       font-family: var(--font-display);
@@ -474,10 +693,11 @@
       letter-spacing: -4px;
       user-select: none;
       text-align: center;
-      transition: color 0.4s, font-size 0.3s;
+      transition: color 0.4s;
       font-size: clamp(100px, 28vw, 280px);
     }
-    #fs-clock.reading { color: var(--purple); }
+    #fs-clock.long { font-size: clamp(80px, 22vw, 280px); }
+    #fs-clock.reading { color: var(--pink); }
     #fs-clock.low { color: var(--orange); }
     #fs-clock.very-low, #fs-clock.done { color: var(--red); }
     #fs-clock.done { font-size: clamp(40px, 10vw, 90px); letter-spacing: -1px; }
@@ -488,14 +708,36 @@
       margin-top: 8px;
       display: none;
       font-family: var(--font-body);
+      text-align: center;
+      padding: 0 20px;
     }
     #fs-reading-sub.idle-breakdown {
-      color: var(--purple);
+      color: var(--pink);
       font-weight: 600;
+    }
+
+    /* Fullscreen group cards */
+    #fs-cards {
+      width: min(96vw, 1600px);
+      gap: 3vw;
+      margin: 0;
+    }
+    #fs-cards .card { border: none; padding: 0; }
+    #fs-cards .card-name { font-size: clamp(20px, 3vw, 40px); }
+    #fs-cards .card-clock {
+      font-size: clamp(56px, 10.5vw, 200px);
+      letter-spacing: -3px;
+      margin: 12px 0 10px;
+    }
+    #fs-cards .card-clock.done { font-size: clamp(32px, 5vw, 80px); letter-spacing: -1px; padding: 0; }
+    #fs-cards .card-sub { font-size: clamp(16px, 2vw, 26px); min-height: 32px; }
+    @media (max-width: 520px) {
+      #fs-cards { grid-template-columns: 1fr 1fr; }
     }
 
     /* Fullscreen pause btn fades */
     #fs-controls {
+      margin-top: clamp(24px, 5vh, 56px);
       opacity: 1;
       transition: opacity 0.5s ease;
       pointer-events: auto;
@@ -519,29 +761,173 @@
       justify-content: center;
       line-height: 1;
       padding: 0;
-      padding-left: 3px; /* optical correction for ▶ glyph */
       transition: background 0.2s, opacity 0.2s;
       box-shadow: 0 4px 20px rgba(34,197,94,0.35);
     }
     #fs-start-btn.paused {
       background: var(--gray-800);
       box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      padding-left: 0; /* ⏸ is already centered */
     }
     #fs-start-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     /* ── Version tag ── */
+    /* ── Help: "i" buttons, hover tips and the steps dialog ── */
+    .section-head {
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .section-head .section-label { margin-bottom: 0; align-self: center; line-height: 1; }
+    .section-head .info-btn { width: 22px; height: 22px; font-size: 14px; }
+
+    .info-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      font-size: 17px;
+      color: var(--gray-400);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: color 0.15s, background 0.15s;
+    }
+    .info-btn:hover, .info-btn.pinned { color: var(--blue); background: var(--blue-light); }
+    .info-btn:focus-visible { outline: 3px solid var(--blue-border); outline-offset: 1px; }
+
+    #tip {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10001;
+      max-width: 280px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      background: var(--gray-900);
+      color: white;
+      font-family: var(--font-body);
+      font-size: 13px;
+      line-height: 1.45;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+      pointer-events: none;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    #tip.visible { visibility: visible; opacity: 1; }
+
+    #help-btn .help-text { font-size: 14px; font-weight: 600; }
+
+    #help {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #help[hidden] { display: none; }
+    .help-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(17, 24, 39, 0.45);
+    }
+    .help-card {
+      position: relative;
+      width: 100%;
+      max-width: 540px;
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+      background: white;
+      border-radius: 16px;
+      padding: 22px 24px 24px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      font-family: var(--font-body);
+      color: var(--gray-800);
+    }
+    .help-card:focus { outline: none; }
+    .help-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .help-head h2 { font-size: 20px; font-weight: 700; color: var(--gray-900); }
+
+    .help-steps {
+      list-style: none;
+      counter-reset: step;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .help-steps li {
+      counter-increment: step;
+      position: relative;
+      padding-left: 38px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--gray-600);
+    }
+    .help-steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: -1px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--blue-light);
+      color: var(--blue-dark);
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .help-steps strong { color: var(--gray-900); }
+
+    .help-sub {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin-bottom: 8px;
+    }
+    .help-colours {
+      list-style: none;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 16px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .help-colours li { display: flex; align-items: center; gap: 8px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .help-note { font-size: 13px; color: var(--gray-500); line-height: 1.5; margin-bottom: 8px; }
+    #help-done { margin-top: 8px; }
+
     #version-tag {
       position: fixed;
       bottom: 10px;
-      right: 14px;
+      left: 14px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.9);
       font-size: 11px;
       color: var(--gray-400);
       font-family: var(--font-body);
       letter-spacing: 0.05em;
       pointer-events: none;
       user-select: none;
-      z-index: 1;
+      z-index: 10;
     }
     /* Hide when fullscreen overlay is active */
     #fullscreen-overlay.active ~ #version-tag { display: none; }
@@ -556,59 +942,99 @@
     <div class="top-bar">
       <span id="date-str"></span>
       <div style="display:flex;gap:6px;align-items:center;">
-        <button class="icon-btn" id="reset-btn" title="Herstel">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <button class="icon-btn" id="help-btn" aria-haspopup="dialog"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg><span class="help-text">Hulp</span></button>
+        <button class="icon-btn" id="reset-btn" aria-label="Herstel" data-tip="Herstel: stop die horlosie en begin van voor af. Terwyl dit loop, klik twee keer sodat dit nie per ongeluk gebeur nie.">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
             <path d="M3 3v5h5"/>
           </svg>
+          <span class="reset-text" hidden>Klik weer om te herstel</span>
         </button>
-        <button class="icon-btn" id="fullscreen-btn" title="Volskerm">⛶</button>
+        <button class="icon-btn" id="fullscreen-btn" aria-label="Volskerm" data-tip="Volskerm: wys net die horlosie, groot genoeg vir die projektor. Druk Esc of Verlaat om terug te gaan."><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
       </div>
     </div>
 
-    <input id="subject-input" value="" placeholder="Toets Naam Hier" />
+    <section class="stage">
+      <input id="subject-input" value="" placeholder="Toets Naam Hier" aria-label="Toets se naam" data-tip="Tik die toets se naam, bv. Wiskunde Gr. 10. Dit wys bo die horlosie en op volskerm." />
 
-    <p id="phase-label">Gereed</p>
+      <p id="phase-label">Gereed</p>
 
-    <div id="clock">30:00</div>
+      <div id="clock">30:00</div>
 
-    <p id="reading-sub"></p>
+      <p id="reading-sub"></p>
 
-    <div class="controls">
-      <button id="start-btn">▶ Begin</button>
-    </div>
+      <div class="cards" id="cards">
+        <div class="card"><p class="card-name"></p><div class="card-clock"></div><p class="card-sub"></p></div>
+        <div class="card"><p class="card-name"></p><div class="card-clock"></div><p class="card-sub"></p></div>
+      </div>
 
-    <hr class="divider" />
+      <div class="controls">
+        <button id="start-btn" aria-label="Begin" data-tip="Begin die aftelling. Klik weer om te pouseer en te hervat. Die spasiebalk werk ook."><svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg><span>Begin</span></button>
+      </div>
+    </section>
 
-    <p class="section-label">Toetstyd</p>
+    <hr class="divider stage-divider" />
 
-    <div class="presets" id="presets"></div>
+    <aside class="sidebar">
+      <p id="locked-hint" hidden>Die horlosie het begin. Herstel dit eers om die tye te verander.</p>
 
-    <div class="custom-row">
-      <input class="custom-input" id="custom-exam-input" type="number" min="1" placeholder="Spesifiseer min" />
-      <button class="set-btn" id="custom-exam-btn">Stel</button>
-    </div>
+      <fieldset id="settings">
 
-    <hr class="divider" />
-
-    <!-- Reading panel -->
-    <div id="reading-panel">
-      <div class="toggle-row">
-        <div class="toggle-track" id="reading-toggle">
-          <div class="toggle-thumb"></div>
+        <div class="section-head">
+          <p class="section-label">Toetstyd</p>
+          <span class="info-btn" role="button" tabindex="0" aria-label="Meer oor toetstyd" data-tip="Kies hoe lank die toets is. Klik op 'n tyd, of tik jou eie aantal minute en klik Stel."><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
         </div>
-        <span class="toggle-label" id="reading-toggle-label">📖 Leestyd voor eksamen</span>
-      </div>
-      <div id="reading-body">
-        <p id="reading-hint">Leestyd tel af eerste — toetstyd begin outomaties daarna.</p>
-        <div class="reading-presets" id="reading-presets"></div>
-        <div class="reading-custom-row">
-          <input class="reading-custom-input" id="custom-reading-input" type="number" min="1" placeholder="Spesifiseer min" />
-          <button class="reading-set-btn" id="custom-reading-btn">Stel</button>
-          <span id="reading-display">= 10 min</span>
+
+        <div class="presets" id="presets"></div>
+
+        <div class="custom-row">
+          <input class="custom-input" id="custom-exam-input" type="number" min="1" placeholder="Spesifiseer min" aria-label="Toetstyd in minute" data-tip="Tik die aantal minute en druk Enter of klik Stel." />
+          <button class="set-btn" id="custom-exam-btn">Stel</button>
         </div>
-      </div>
-    </div>
+
+        <hr class="divider" />
+
+        <!-- Reading panel -->
+        <div class="panel" id="reading-panel">
+          <div class="panel-head">
+            <button type="button" class="toggle-row" id="reading-toggle" role="switch" aria-checked="false">
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              <span class="toggle-label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>Leestyd voor eksamen</span>
+            </button>
+            <span class="info-btn" role="button" tabindex="0" aria-label="Meer oor leestyd" data-tip="Leestyd tel eerste af. Die toetstyd begin vanself sodra die leestyd verby is."><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
+          </div>
+          <div class="panel-body" id="reading-body">
+            <div class="reading-presets" id="reading-presets"></div>
+            <div class="reading-custom-row">
+              <input class="reading-custom-input" id="custom-reading-input" type="number" min="1" placeholder="Spesifiseer min" aria-label="Leestyd in minute" data-tip="Tik die aantal minute leestyd en druk Enter of klik Stel." />
+              <button class="reading-set-btn" id="custom-reading-btn">Stel</button>
+              <span id="reading-display">= 10 min</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Second group panel -->
+        <div class="panel" id="group-panel">
+          <div class="panel-head">
+            <button type="button" class="toggle-row" id="group-toggle" role="switch" aria-checked="false">
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              <span class="toggle-label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Tweede groep met ander toetstyd</span>
+            </button>
+            <span class="info-btn" role="button" tabindex="0" aria-label="Meer oor die tweede groep" data-tip="Vir twee groepe in dieselfde lokaal met verskillende tye, bv. English HL kry 30 min meer as FAL. Albei begin saam en elkeen kry sy eie horlosie."><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
+          </div>
+          <div class="panel-body" id="group-body">
+            <input id="group-name-input" placeholder="Groep 2 se naam (bv. English HL)" aria-label="Groep 2 se naam" data-tip="Tik groep 2 se naam, bv. English HL. Groep 1 se naam is die naam bo-aan." />
+            <div class="presets" id="group-presets"></div>
+            <div class="custom-row">
+              <input class="custom-input" id="custom-group-input" type="number" min="1" placeholder="Spesifiseer min" aria-label="Groep 2 se toetstyd in minute" data-tip="Tik groep 2 se toetstyd in minute en druk Enter of klik Stel." />
+              <button class="set-btn" id="custom-group-btn">Stel</button>
+              <span id="group-display">= 60 min</span>
+            </div>
+          </div>
+        </div>
+
+      </fieldset>
+    </aside>
 
   </div><!-- /app -->
 
@@ -617,37 +1043,96 @@
 
     <div id="fs-topbar">
       <span id="fs-date"></span>
-      <button id="fs-exit-btn">✕ Verlaat</button>
+      <button id="fs-exit-btn" data-tip="Gaan terug na die gewone skerm."><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Verlaat</button>
     </div>
 
-    <p id="fs-subject">Rekeningkunde Gr.11</p>
+    <p id="fs-subject">AHMP Aftelhorlosie</p>
     <p id="fs-phase">Gereed</p>
     <div id="fs-clock">30:00</div>
     <p id="fs-reading-sub"></p>
 
+    <div class="cards" id="fs-cards">
+      <div class="card"><p class="card-name"></p><div class="card-clock"></div><p class="card-sub"></p></div>
+      <div class="card"><p class="card-name"></p><div class="card-clock"></div><p class="card-sub"></p></div>
+    </div>
+
     <div id="fs-controls">
-      <button id="fs-start-btn">▶</button>
+      <button id="fs-start-btn" aria-label="Begin" data-tip="Pouseer of hervat. Die knoppies verdwyn na 3 sekondes; beweeg die muis om hulle terug te kry."><svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg></button>
     </div>
 
   </div>
 
   <span id="version-tag">Version 1.7</span>
 
+  <!-- ══ HELP ══ -->
+  <div id="help" hidden>
+    <div class="help-backdrop" id="help-backdrop"></div>
+    <div class="help-card" role="dialog" aria-modal="true" aria-labelledby="help-title" tabindex="-1">
+      <div class="help-head">
+        <h2 id="help-title">Hoe werk die aftelhorlosie?</h2>
+        <button class="icon-btn" id="help-close" aria-label="Maak toe"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <ol class="help-steps">
+        <li><strong>Gee die toets 'n naam.</strong> Tik dit bo-aan, bv. Wiskunde Gr. 10. Dit wys ook op volskerm.</li>
+        <li><strong>Kies die toetstyd.</strong> Klik op 'n tyd, of tik jou eie minute en klik Stel.</li>
+        <li><strong>Leestyd (as nodig).</strong> Skakel Leestyd aan as die leerders eers mag lees. Die toetstyd begin vanself daarna.</li>
+        <li><strong>Twee groepe (as nodig).</strong> Skryf twee vakke saam met verskillende tye, soos English HL en FAL? Skakel Tweede groep aan, gee dit 'n naam en kies sy tyd. Albei begin saam.</li>
+        <li><strong>Volskerm en Begin.</strong> Klik op Volskerm vir die projektor en dan op Begin, of druk die spasiebalk.</li>
+        <li><strong>Tydens die toets.</strong> Pouseer en hervat met dieselfde knoppie. Die tye is gesluit sodat niks per ongeluk verander nie. As die blad herlaai, loop die horlosie voort waar dit was.</li>
+        <li><strong>Klaar.</strong> Klik op Herstel om van voor af te begin. Terwyl die horlosie loop, klik twee keer.</li>
+      </ol>
+      <p class="help-sub">Wat die kleure beteken</p>
+      <ul class="help-colours">
+        <li><span class="dot" style="background:var(--blue)"></span>Toetstyd loop</li>
+        <li><span class="dot" style="background:var(--pink)"></span>Leestyd</li>
+        <li><span class="dot" style="background:var(--orange)"></span>Laaste 15 minute</li>
+        <li><span class="dot" style="background:var(--red)"></span>Laaste 5 minute</li>
+      </ul>
+      <p class="help-note">By toetse korter as 45 minute word dit oranje by 5 minute en rooi by 1 minuut. Die horlosie wys ook 'n flikkerende boodskap by 30, 15 en 5 minute oor.</p>
+      <p class="help-note">Hou die muis oor 'n knoppie, of klik op die i, vir meer hulp.</p>
+      <button class="set-btn" id="help-done">Reg so</button>
+    </div>
+  </div>
+
+  <div id="tip" role="tooltip"></div>
+
+  <!-- Screen reader announcements for time warnings -->
+  <p id="announce" class="sr-only" aria-live="polite"></p>
+
   <script>
-    // ── State ──────────────────────────────────────────────────────────────────
+    // ── Settings ───────────────────────────────────────────────────────────────
     const PRESETS = [30, 45, 60, 90, 120, 150, 180];
     const READING_PRESETS = [5, 10, 15, 20];
+    const WARNING_MARKS = [30, 15, 5];       // minutes left that trigger a warning
+    const WARNING_SECS  = 20;                // how long each warning stays visible
+    const DEFAULT_NAME  = "AHMP Aftelhorlosie";
+    const STORE_KEY     = "ahmp-aftelhorlosie";
+    const STALE_MS      = 12 * 3600 * 1000;  // ignore saved state older than this
 
-    let examTotal    = 30 * 60;
-    let readingTotal = 10 * 60;
+    let examTotal      = 30 * 60;   // group 1 (seconds)
+    let group2Enabled  = false;
+    let group2Total    = 60 * 60;   // group 2 (seconds)
     let readingEnabled = false;
-    let phase        = "idle";   // idle | reading | exam | done
-    let remaining    = 30 * 60;
-    let running      = false;
+    let readingTotal   = 10 * 60;
 
-    let tickInterval  = null;
-    let mouseTimer    = null;
-    let isFullscreen  = false;
+    // ── Timer state ────────────────────────────────────────────────────────────
+    // Time is measured from the wall clock, never by counting ticks, so the
+    // display stays accurate when the browser throttles or delays the interval.
+    // Reading time and every group share one start: a group's time left is its
+    // end (reading + its own exam time) minus the time elapsed since Begin.
+    let started      = false;
+    let running      = false;
+    let banked       = 0;   // ms elapsed in previous runs (before the last pause)
+    let runStartedAt = 0;   // wall-clock ms when the current run started
+
+    let isFullscreen = false;
+    let mouseTimer   = null;
+    let resetArmed   = false;
+    let resetTimer   = null;
+    let lastAnnounce = "";
+
+    const ICON_PLAY  = '<svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg>';
+    const ICON_PAUSE = '<svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1.5"/><rect x="14" y="4" width="5" height="16" rx="1.5"/></svg>';
 
     // ── Helpers ────────────────────────────────────────────────────────────────
     function pad(n) { return String(n).padStart(2, "0"); }
@@ -656,7 +1141,12 @@
       const h = Math.floor(secs / 3600);
       const m = Math.floor((secs % 3600) / 60);
       const s = secs % 60;
-      return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+      return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+    }
+
+    function clockTime(ms) {
+      const d = new Date(ms);
+      return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
 
     function getDateString() {
@@ -665,268 +1155,443 @@
       });
     }
 
+    function setText(el, text) { if (el.textContent !== text) el.textContent = text; }
+    function setClass(el, cls) { if (el.className !== cls) el.className = cls; }
+    function setHTML(el, html) { if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; } }
+
+    function elapsed() {
+      return banked + (running ? Math.max(0, Date.now() - runStartedAt) : 0);
+    }
+
+    function readingMs() { return readingEnabled ? readingTotal * 1000 : 0; }
+
+    function groups() {
+      const list = [{ name: $subjectInput.value.trim(), total: examTotal }];
+      if (group2Enabled) list.push({ name: $groupNameInput.value.trim(), total: group2Total });
+      return list;
+    }
+
+    function groupEndMs(g) { return readingMs() + g.total * 1000; }
+
+    function isAllDone() {
+      return started && elapsed() >= Math.max(...groups().map(groupEndMs));
+    }
+
+    // Long exams warn earlier; short ones would otherwise be orange throughout.
+    function warnLevel(total, rem) {
+      const long = total >= 45 * 60;
+      if (rem <= (long ? 5 * 60 : 60)) return "very-low";
+      if (rem <= (long ? 15 * 60 : 5 * 60)) return "low";
+      return "";
+    }
+
+    function warningText(total, rem) {
+      for (const m of WARNING_MARKS) {
+        const mark = m * 60;
+        if (total > mark && rem <= mark && rem > mark - WARNING_SECS) return `Nog ${m} minute`;
+      }
+      return "";
+    }
+
     // ── DOM refs ───────────────────────────────────────────────────────────────
-    const $body         = document.body;
-    const $clock        = document.getElementById("clock");
-    const $fsClock      = document.getElementById("fs-clock");
-    const $phaseLabel   = document.getElementById("phase-label");
-    const $fsPhase      = document.getElementById("fs-phase");
-    const $startBtn     = document.getElementById("start-btn");
-    const $fsStartBtn   = document.getElementById("fs-start-btn");
-    const $readingSub   = document.getElementById("reading-sub");
-    const $fsReadingSub = document.getElementById("fs-reading-sub");
-    const $fsOverlay    = document.getElementById("fullscreen-overlay");
-    const $fsTopbar     = document.getElementById("fs-topbar");
-    const $fsControls   = document.getElementById("fs-controls");
-    const $fsDate       = document.getElementById("fs-date");
-    const $fsSubject    = document.getElementById("fs-subject");
-    const $subjectInput = document.getElementById("subject-input");
-    const $readingPanel = document.getElementById("reading-panel");
-    const $readingBody  = document.getElementById("reading-body");
-    const $readingToggle= document.getElementById("reading-toggle");
-    const $readingToggleLabel = document.getElementById("reading-toggle-label");
+    const $date          = document.getElementById("date-str");
+    const $fsDate        = document.getElementById("fs-date");
+    const $startBtn      = document.getElementById("start-btn");
+    const $fsStartBtn    = document.getElementById("fs-start-btn");
+    const $resetBtn      = document.getElementById("reset-btn");
+    const $resetText     = $resetBtn.querySelector(".reset-text");
+    const $fsOverlay     = document.getElementById("fullscreen-overlay");
+    const $fsExitBtn     = document.getElementById("fs-exit-btn");
+    const $fsControls    = document.getElementById("fs-controls");
+    const $fsSubject     = document.getElementById("fs-subject");
+    const $subjectInput  = document.getElementById("subject-input");
+    const $settings      = document.getElementById("settings");
+    const $lockedHint    = document.getElementById("locked-hint");
+    const $announce      = document.getElementById("announce");
+
+    const $readingPanel   = document.getElementById("reading-panel");
+    const $readingBody    = document.getElementById("reading-body");
+    const $readingToggle  = document.getElementById("reading-toggle");
     const $readingDisplay = document.getElementById("reading-display");
-    const $customExamInput = document.getElementById("custom-exam-input");
+    const $customExamInput    = document.getElementById("custom-exam-input");
     const $customReadingInput = document.getElementById("custom-reading-input");
 
-    // ── Init date ──────────────────────────────────────────────────────────────
-    const dateStr = getDateString();
-    document.getElementById("date-str").textContent = dateStr;
-    $fsDate.textContent = dateStr;
+    const $groupPanel     = document.getElementById("group-panel");
+    const $groupBody      = document.getElementById("group-body");
+    const $groupToggle    = document.getElementById("group-toggle");
+    const $groupDisplay   = document.getElementById("group-display");
+    const $groupNameInput = document.getElementById("group-name-input");
+    const $customGroupInput = document.getElementById("custom-group-input");
 
-    // ── Build preset buttons ───────────────────────────────────────────────────
-    const $presetsWrap = document.getElementById("presets");
-    PRESETS.forEach(m => {
-      const btn = document.createElement("button");
-      btn.className = "preset-btn" + (examTotal === m * 60 ? " active" : "");
-      btn.textContent = `${m} min`;
-      btn.dataset.minutes = m;
-      btn.addEventListener("click", () => handlePreset(m));
-      $presetsWrap.appendChild(btn);
-    });
+    function viewRefs(phaseId, clockId, subId, cardsId) {
+      const cards = document.getElementById(cardsId);
+      return {
+        phase: document.getElementById(phaseId),
+        clock: document.getElementById(clockId),
+        sub:   document.getElementById(subId),
+        cards,
+        cardEls: [...cards.querySelectorAll(".card")].map(c => ({
+          name:  c.querySelector(".card-name"),
+          clock: c.querySelector(".card-clock"),
+          sub:   c.querySelector(".card-sub"),
+        })),
+      };
+    }
+    const views = [
+      viewRefs("phase-label", "clock", "reading-sub", "cards"),
+      viewRefs("fs-phase", "fs-clock", "fs-reading-sub", "fs-cards"),
+    ];
 
-    const $readingPresetsWrap = document.getElementById("reading-presets");
-    READING_PRESETS.forEach(m => {
-      const btn = document.createElement("button");
-      btn.className = "reading-preset-btn" + (readingTotal === m * 60 ? " active" : "");
-      btn.textContent = `${m} min`;
-      btn.dataset.minutes = m;
-      btn.addEventListener("click", () => {
-        readingTotal = m * 60;
-        updateReadingPresetBtns();
-        updateReadingDisplay();
-        if (phase === "idle" && readingEnabled) {
-          remaining = readingTotal;
-        }
-        render();
+    // ── Preset buttons ─────────────────────────────────────────────────────────
+    function buildPresets(wrapId, list, className, onPick) {
+      const wrap = document.getElementById(wrapId);
+      list.forEach(m => {
+        const btn = document.createElement("button");
+        btn.className = className;
+        btn.textContent = `${m} min`;
+        btn.dataset.minutes = m;
+        btn.addEventListener("click", () => onPick(m * 60));
+        wrap.appendChild(btn);
       });
-      $readingPresetsWrap.appendChild(btn);
-    });
+      return wrap;
+    }
+
+    const $presetsWrap        = buildPresets("presets", PRESETS, "preset-btn", s => { examTotal = s; settingsChanged(); });
+    const $readingPresetsWrap = buildPresets("reading-presets", READING_PRESETS, "reading-preset-btn", s => { readingTotal = s; settingsChanged(); });
+    const $groupPresetsWrap   = buildPresets("group-presets", PRESETS, "preset-btn", s => { group2Total = s; settingsChanged(); });
+
+    function markActive(wrap, totalSecs) {
+      wrap.querySelectorAll("button").forEach(btn => {
+        btn.classList.toggle("active", parseInt(btn.dataset.minutes, 10) * 60 === totalSecs);
+      });
+    }
+
+    // Reflect the settings in the panels, toggles and preset buttons.
+    function syncSettingsUI() {
+      markActive($presetsWrap, examTotal);
+      markActive($readingPresetsWrap, readingTotal);
+      markActive($groupPresetsWrap, group2Total);
+
+      $readingToggle.setAttribute("aria-checked", String(readingEnabled));
+      $readingPanel.classList.toggle("enabled", readingEnabled);
+      $readingBody.classList.toggle("visible", readingEnabled);
+      $readingDisplay.textContent = `= ${Math.round(readingTotal / 60)} min`;
+
+      $groupToggle.setAttribute("aria-checked", String(group2Enabled));
+      $groupPanel.classList.toggle("enabled", group2Enabled);
+      $groupBody.classList.toggle("visible", group2Enabled);
+      $groupDisplay.textContent = `= ${Math.round(group2Total / 60)} min`;
+
+      $subjectInput.placeholder = group2Enabled ? "Groep 1 se naam (bv. English FAL)" : "Toets Naam Hier";
+    }
 
     // ── Render ─────────────────────────────────────────────────────────────────
+    function groupView(g, i, el, dual) {
+      const endMs    = groupEndMs(g);
+      const done     = started && el >= endMs;
+      const rem      = started ? Math.max(0, Math.ceil((endMs - el) / 1000)) : g.total;
+      const examTime = started && el >= readingMs() && !done;
+      const warn     = examTime ? warningText(g.total, rem) : "";
+
+      let sub = "", subCls = "";
+      if (warn) { sub = warn; subCls = "warn"; }
+      else if (examTime && running) sub = `Eindig om ${clockTime(Date.now() + endMs - el)}`;
+
+      return {
+        name: g.name || (dual ? `Groep ${i + 1}` : ""),
+        text: done ? "Tyd Verstreke!" : formatTime(rem),
+        cls:  done ? "done" : examTime ? warnLevel(g.total, rem) : "",
+        sub, subCls, warn,
+      };
+    }
+
+    function readingSubText(gs) {
+      const label = (g, i) => g.name || `Groep ${i + 1}`;
+      const readMin = Math.round(readingTotal / 60);
+      if (!started) {
+        if (gs.length === 1) return `${readMin} min lees + ${Math.round(gs[0].total / 60)} min toets`;
+        return `${readMin} min lees, dan ` + gs.map((g, i) => `${label(g, i)} ${Math.round(g.total / 60)} min`).join(" · ");
+      }
+      if (gs.length === 1) return `Toetstyd daarna: ${formatTime(gs[0].total)}`;
+      return "Daarna: " + gs.map((g, i) => `${label(g, i)} ${formatTime(g.total)}`).join(" · ");
+    }
+
     function render() {
-      const finished   = phase === "done";
-      const isLow      = remaining <= 60 && remaining > 0 && phase === "exam";
-      const isVeryLow  = remaining <= 30 && remaining > 0 && phase === "exam";
-      const isReading  = phase === "reading";
-      const isIdleWithReading = phase === "idle" && readingEnabled;
-      // Clock text
-      const clockText = finished ? "Tyd Verstreke!" : formatTime(remaining);
-      $clock.textContent = clockText;
-      $fsClock.textContent = clockText;
+      const el   = elapsed();
+      const gs   = groups();
+      const dual = gs.length > 1;
+      const allDone   = isAllDone();
+      const inReading = started && el < readingMs();
+      const showReading = readingEnabled && (!started || inReading);
+      const showCards   = dual && !showReading;
 
-      // Clock colour classes
-      const clockClass = finished ? "done"
-        : isVeryLow ? "very-low"
-        : isLow     ? "low"
-        : (isReading || isIdleWithReading) ? "reading"
-        : "";
-      [$clock, $fsClock].forEach(el => {
-        el.className = clockClass;
-      });
+      const dateStr = getDateString();
+      setText($date, dateStr);
+      setText($fsDate, dateStr);
 
-      // Phase label
-      const phaseText = isReading ? "Leestyd — eindig in…"
-        : phase === "exam" ? "Toetstyd — eindig in…"
-        : finished ? ""
-        : "Gereed";
-      $phaseLabel.textContent = phaseText;
-      $fsPhase.textContent = phaseText;
-      $phaseLabel.className = isReading ? "reading" : "";
-      $fsPhase.className = isReading ? "reading" : "";
+      const cards = gs.map((g, i) => groupView(g, i, el, dual));
 
-      // Reading sub info
-      if (isReading) {
-        const readingMsg = `Toetstyd daarna: ${formatTime(examTotal)}`;
-        $readingSub.textContent = readingMsg;
-        $readingSub.className = "";
-        $readingSub.style.display = "block";
-        $fsReadingSub.textContent = readingMsg;
-        $fsReadingSub.className = "";
-        $fsReadingSub.style.display = "block";
-      } else if (isIdleWithReading) {
-        const readMin = Math.round(readingTotal / 60);
-        const examMin = Math.round(examTotal / 60);
-        const breakdownMsg = `${readMin} min lees + ${examMin} min toets`;
-        $readingSub.textContent = breakdownMsg;
-        $readingSub.className = "idle-breakdown";
-        $readingSub.style.display = "block";
-        $fsReadingSub.textContent = breakdownMsg;
-        $fsReadingSub.className = "idle-breakdown";
-        $fsReadingSub.style.display = "block";
+      // The single big clock shows reading time, or the only group's time.
+      let main;
+      if (showReading) {
+        const rem = started ? Math.max(0, Math.ceil((readingMs() - el) / 1000)) : readingTotal;
+        main = { text: formatTime(rem), cls: "reading", sub: readingSubText(gs), subCls: started ? "" : "idle-breakdown" };
       } else {
-        $readingSub.style.display = "none";
-        $fsReadingSub.style.display = "none";
+        main = cards[0];
       }
 
-      // Start button
-      const startText = running ? "⏸" : phase === "idle" ? "▶ Begin" : "▶";
-      $startBtn.textContent = startText;
-      $startBtn.className = running ? "paused" : "";
-      $startBtn.disabled = finished;
-      $fsStartBtn.textContent = running ? "⏸" : "▶";
-      $fsStartBtn.className = running ? "paused" : "";
-      $fsStartBtn.disabled = finished;
+      const phaseText = allDone ? ""
+        : !started ? "Gereed"
+        : !running ? "Gepouseer"
+        : inReading ? "Leestyd — eindig in…"
+        : "Toetstyd — eindig in…";
+      const phaseCls = inReading ? "reading" : "";
 
-      // Body background flash handled separately
+      views.forEach(v => {
+        setText(v.phase, phaseText);
+        setClass(v.phase, phaseCls);
+
+        v.clock.hidden = showCards;
+        setText(v.clock, main.text);
+        const long = main.cls !== "done" && main.text.length > 5;
+        setClass(v.clock, [main.cls, long ? "long" : ""].filter(Boolean).join(" "));
+
+        const showSub = !showCards && main.sub;
+        v.sub.style.display = showSub ? "block" : "none";
+        if (showSub) {
+          setText(v.sub, main.sub);
+          setClass(v.sub, main.subCls);
+        }
+
+        v.cards.classList.toggle("visible", showCards);
+        if (showCards) {
+          cards.forEach((c, i) => {
+            const ce = v.cardEls[i];
+            setText(ce.name, c.name);
+            setText(ce.clock, c.text);
+            setClass(ce.clock, "card-clock" + (c.cls ? " " + c.cls : ""));
+            setText(ce.sub, c.sub);
+            setClass(ce.sub, "card-sub" + (c.subCls ? " " + c.subCls : ""));
+          });
+        }
+      });
+
+      // Fullscreen heading: hidden when the cards already show the names.
+      const subject = showCards ? ""
+        : dual ? cards.map(c => c.name).join(" · ")
+        : (gs[0].name || DEFAULT_NAME);
+      setText($fsSubject, subject);
+      $fsSubject.style.display = subject ? "" : "none";
+
+      // Announce warnings to screen readers once each.
+      const warnMsg = cards.filter(c => c.warn).map(c => (c.name ? `${c.name}: ` : "") + c.warn).join(". ");
+      if (warnMsg !== lastAnnounce) {
+        lastAnnounce = warnMsg;
+        if (warnMsg) $announce.textContent = warnMsg;
+      }
+
+      // Start buttons
+      const label = running ? "Pouseer" : started ? "Hervat" : "Begin";
+      setHTML($startBtn, running ? ICON_PAUSE : started ? ICON_PLAY : ICON_PLAY + "<span>Begin</span>");
+      $startBtn.setAttribute("aria-label", label);
+      setClass($startBtn, running ? "paused" : "");
+      $startBtn.disabled = allDone;
+      setHTML($fsStartBtn, running ? ICON_PAUSE : ICON_PLAY);
+      $fsStartBtn.setAttribute("aria-label", label);
+      setClass($fsStartBtn, running ? "paused" : "");
+      $fsStartBtn.disabled = allDone;
+
+      // Times can only change before Begin (or after Herstel).
+      $settings.disabled = started;
+      $lockedHint.hidden = !started;
     }
 
     // ── Ticking ────────────────────────────────────────────────────────────────
-    function startTick() {
-      clearInterval(tickInterval);
-      tickInterval = setInterval(() => {
-        if (remaining <= 1) {
-          clearInterval(tickInterval);
-          if (phase === "reading") {
-            phase = "exam";
-            remaining = examTotal;
-            running = true;
-            startTick();
-          } else {
-            phase = "done";
-            remaining = 0;
-            running = false;
-          }
-          render();
-          return;
-        }
-        remaining--;
-        render();
-      }, 1000);
+    function tick() {
+      if (running && isAllDone()) {
+        banked = elapsed();
+        running = false;
+        save();
+        updateWakeLock();
+      }
+      render();
     }
-
-    function stopTick() { clearInterval(tickInterval); }
 
     // ── Handlers ───────────────────────────────────────────────────────────────
     function handleStart() {
-      if (phase === "done") return;
-      if (phase === "idle") {
-        if (readingEnabled && readingTotal > 0) {
-          phase = "reading";
-          remaining = readingTotal;
-        } else {
-          phase = "exam";
-          remaining = examTotal;
-        }
-        running = true;
-        startTick();
+      if (isAllDone()) return;
+      if (running) {
+        banked = elapsed();
+        running = false;
       } else {
-        running = !running;
-        if (running) startTick(); else stopTick();
+        started = true;
+        running = true;
+        runStartedAt = Date.now();
       }
+      save();
+      updateWakeLock();
       render();
+    }
+
+    // While a timer is running, reset needs a second click within 4 seconds.
+    function handleResetClick() {
+      if (started && !isAllDone() && !resetArmed) {
+        resetArmed = true;
+        $resetBtn.classList.add("armed");
+        $resetText.hidden = false;
+        clearTimeout(resetTimer);
+        resetTimer = setTimeout(disarmReset, 4000);
+        return;
+      }
+      disarmReset();
+      handleReset();
+    }
+
+    function disarmReset() {
+      resetArmed = false;
+      clearTimeout(resetTimer);
+      $resetBtn.classList.remove("armed");
+      $resetText.hidden = true;
     }
 
     function handleReset() {
-      stopTick();
+      started = false;
       running = false;
-      phase = "idle";
-      remaining = readingEnabled ? readingTotal : examTotal;
+      banked = 0;
+      runStartedAt = 0;
+      $subjectInput.value = "";
+      $groupNameInput.value = "";
+      save();
+      updateWakeLock();
       render();
     }
 
-    function handlePreset(minutes) {
-      const secs = minutes * 60;
-      examTotal = secs;
-      stopTick();
-      running = false;
-      phase = "idle";
-      remaining = readingEnabled ? readingTotal : secs;
-      updatePresetBtns();
+    function settingsChanged() {
+      syncSettingsUI();
+      save();
       render();
     }
 
-    function handleCustomExam() {
-      const mins = parseInt($customExamInput.value, 10);
+    function handleCustom($input, apply) {
+      const mins = parseInt($input.value, 10);
       if (!isNaN(mins) && mins > 0) {
-        handlePreset(mins);
-        $customExamInput.value = "";
-      }
-    }
-
-    function handleCustomReading() {
-      const mins = parseInt($customReadingInput.value, 10);
-      if (!isNaN(mins) && mins > 0) {
-        readingTotal = mins * 60;
-        $customReadingInput.value = "";
-        updateReadingPresetBtns();
-        updateReadingDisplay();
-        // If idle and reading enabled, update remaining
-        if (phase === "idle" && readingEnabled) {
-          remaining = readingTotal;
-        }
-        render();
+        apply(mins * 60);
+        $input.value = "";
+        settingsChanged();
       }
     }
 
     function toggleReading() {
       readingEnabled = !readingEnabled;
-      $readingToggle.className = "toggle-track" + (readingEnabled ? " on" : "");
-      $readingToggleLabel.className = "toggle-label" + (readingEnabled ? " on" : "");
-      $readingPanel.className = readingEnabled ? "enabled" : "";
-      $readingBody.className = readingEnabled ? "visible" : "";
-      if (phase === "idle") {
-        remaining = readingEnabled ? readingTotal : examTotal;
-        render();
+      settingsChanged();
+    }
+
+    function toggleGroup() {
+      group2Enabled = !group2Enabled;
+      if (group2Enabled && group2Total <= examTotal) group2Total = examTotal + 30 * 60;
+      settingsChanged();
+    }
+
+    // ── Keep the screen awake while a timer runs ───────────────────────────────
+    let wakeLock = null;
+    let wakeLockBusy = false;
+
+    async function updateWakeLock() {
+      if (wakeLockBusy || !("wakeLock" in navigator)) return;
+      wakeLockBusy = true;
+      let failed = false;
+      try {
+        if (running && !wakeLock && document.visibilityState === "visible") {
+          wakeLock = await navigator.wakeLock.request("screen");
+          wakeLock.addEventListener("release", () => { wakeLock = null; });
+        } else if (!running && wakeLock) {
+          await wakeLock.release();
+          wakeLock = null;
+        }
+      } catch (_) {
+        wakeLock = null;
+        failed = true;
       }
+      wakeLockBusy = false;
+      // Start/pause may have changed while we were waiting on the browser.
+      if (!failed && running !== (wakeLock !== null) && document.visibilityState === "visible") {
+        updateWakeLock();
+      }
+    }
+
+    // The browser drops the lock when the tab is hidden; take it back on return.
+    document.addEventListener("visibilitychange", updateWakeLock);
+
+    // ── Remember the timer across a refresh ────────────────────────────────────
+    function save() {
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify({
+          v: 1, savedAt: Date.now(),
+          examTotal, group2Enabled, group2Total, readingEnabled, readingTotal,
+          name1: $subjectInput.value, name2: $groupNameInput.value,
+          started, running, banked, runStartedAt,
+        }));
+      } catch (_) {}
+    }
+
+    function load() {
+      try {
+        const s = JSON.parse(localStorage.getItem(STORE_KEY));
+        if (!s || s.v !== 1 || Date.now() - s.savedAt > STALE_MS) return;
+        const secs = (x, fallback) => Number.isInteger(x) && x > 0 ? x : fallback;
+        examTotal      = secs(s.examTotal, examTotal);
+        group2Total    = secs(s.group2Total, group2Total);
+        readingTotal   = secs(s.readingTotal, readingTotal);
+        group2Enabled  = s.group2Enabled === true;
+        readingEnabled = s.readingEnabled === true;
+        $subjectInput.value   = typeof s.name1 === "string" ? s.name1 : "";
+        $groupNameInput.value = typeof s.name2 === "string" ? s.name2 : "";
+        if (s.started === true && Number.isFinite(s.banked) && Number.isFinite(s.runStartedAt)) {
+          started = true;
+          running = s.running === true;
+          banked = Math.max(0, s.banked);
+          runStartedAt = s.runStartedAt;
+        }
+      } catch (_) {}
     }
 
     // ── Fullscreen ─────────────────────────────────────────────────────────────
     async function enterFullscreen() {
-      $fsSubject.textContent = $subjectInput.value || "AHMP Aftelhorlosie";
       $fsOverlay.classList.add("active");
       isFullscreen = true;
       try {
         await document.documentElement.requestFullscreen();
       } catch(_) {}
       render();
-      resetMouseTimer();
-      document.addEventListener("mousemove", onMouseMove);
+      showFsControls();
+      document.addEventListener("pointermove", showFsControls);
+      document.addEventListener("pointerdown", showFsControls);
     }
 
     async function exitFullscreen() {
-      $fsOverlay.classList.remove("active");
+      $fsOverlay.classList.remove("active", "idle");
       isFullscreen = false;
       clearTimeout(mouseTimer);
-      document.removeEventListener("mousemove", onMouseMove);
-      document.getElementById("fs-exit-btn").classList.remove("hidden");
+      document.removeEventListener("pointermove", showFsControls);
+      document.removeEventListener("pointerdown", showFsControls);
+      $fsExitBtn.classList.remove("hidden");
       $fsControls.classList.remove("hidden");
       try {
         if (document.fullscreenElement) await document.exitFullscreen();
       } catch(_) {}
     }
 
-    function onMouseMove() {
-      document.getElementById("fs-exit-btn").classList.remove("hidden");
+    // Show the exit/pause buttons and cursor; hide them after 3 s of no movement.
+    function showFsControls() {
+      $fsExitBtn.classList.remove("hidden");
       $fsControls.classList.remove("hidden");
-      resetMouseTimer();
-    }
-
-    function resetMouseTimer() {
+      $fsOverlay.classList.remove("idle");
       clearTimeout(mouseTimer);
       mouseTimer = setTimeout(() => {
-        document.getElementById("fs-exit-btn").classList.add("hidden");
+        $fsExitBtn.classList.add("hidden");
         $fsControls.classList.add("hidden");
+        $fsOverlay.classList.add("idle");
+        hideTip();
       }, 3000);
     }
 
@@ -936,49 +1601,141 @@
       }
     });
 
-    // ── Subject sync ───────────────────────────────────────────────────────────
-    $subjectInput.addEventListener("input", () => {
-      $fsSubject.textContent = $subjectInput.value || "AHMP Aftelhorlosie";
+    // ── Keyboard ───────────────────────────────────────────────────────────────
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && tipTarget) hideTip();
+      if (e.key === "Escape" && !$help.hidden) { closeHelp(); return; }
+      // Escape closes the overlay when the browser has no native fullscreen.
+      if (e.key === "Escape" && isFullscreen && !document.fullscreenElement) {
+        exitFullscreen();
+        return;
+      }
+      // Space starts / pauses, unless the user is typing or on a button.
+      if (e.code === "Space" && !e.repeat && $help.hidden && !e.target.closest("input, textarea, select, button, [role=button]")) {
+        e.preventDefault();
+        handleStart();
+      }
     });
 
-    // ── Update helpers ─────────────────────────────────────────────────────────
-    function updatePresetBtns() {
-      document.querySelectorAll(".preset-btn").forEach(btn => {
-        const active = parseInt(btn.dataset.minutes) * 60 === examTotal;
-        btn.className = "preset-btn" + (active ? " active" : "");
-      });
+    // ── Hover help ─────────────────────────────────────────────────────────────
+    // Any element with data-tip shows its text in a small bubble on hover or
+    // keyboard focus. The "i" buttons also toggle the bubble on click / tap.
+    const $tip = document.getElementById("tip");
+    let tipTarget = null;
+    let tipTimer  = null;
+    let tipPinned = false;
+
+    function showTip(el) {
+      clearTimeout(tipTimer);
+      tipTarget?.removeAttribute("aria-describedby");
+      $tip.textContent = el.dataset.tip;
+      const r = el.getBoundingClientRect();
+      const t = $tip.getBoundingClientRect();
+      let top = r.top - t.height - 8;
+      if (top < 8) top = r.bottom + 8;
+      const left = Math.max(8, Math.min(r.left + r.width / 2 - t.width / 2, innerWidth - t.width - 8));
+      $tip.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+      $tip.classList.add("visible");
+      el.setAttribute("aria-describedby", "tip");
+      tipTarget = el;
     }
 
-    function updateReadingPresetBtns() {
-      document.querySelectorAll(".reading-preset-btn").forEach(btn => {
-        const active = parseInt(btn.dataset.minutes) * 60 === readingTotal;
-        btn.className = "reading-preset-btn" + (active ? " active" : "");
-      });
+    function hideTip() {
+      clearTimeout(tipTimer);
+      $tip.classList.remove("visible");
+      tipTarget?.removeAttribute("aria-describedby");
+      tipTarget?.classList.remove("pinned");
+      tipTarget = null;
+      tipPinned = false;
     }
 
-    function updateReadingDisplay() {
-      $readingDisplay.textContent = `= ${Math.round(readingTotal / 60)} min`;
+    function toggleInfo(el) {
+      if (tipPinned && tipTarget === el) { hideTip(); return; }
+      hideTip();
+      showTip(el);
+      tipPinned = true;
+      el.classList.add("pinned");
     }
+
+    document.addEventListener("pointerover", e => {
+      if (e.pointerType === "touch" || tipPinned) return;
+      const el = e.target.closest("[data-tip]");
+      if (!el || el === tipTarget) return;
+      clearTimeout(tipTimer);
+      tipTimer = setTimeout(() => showTip(el), 400);
+    });
+    document.addEventListener("pointerout", e => {
+      if (tipPinned) return;
+      const el = e.target.closest("[data-tip]");
+      if (el && !el.contains(e.relatedTarget)) hideTip();
+    });
+    document.addEventListener("focusin", e => {
+      const el = e.target.closest("[data-tip]");
+      if (el && !el.matches("input") && el.matches(":focus-visible")) showTip(el);
+    });
+    document.addEventListener("focusout", () => { if (!tipPinned) hideTip(); });
+    document.addEventListener("scroll", hideTip, true);
+    document.addEventListener("pointerdown", e => {
+      if (tipPinned && !e.target.closest(".info-btn")) hideTip();
+    });
+
+    document.querySelectorAll(".info-btn").forEach(el => {
+      el.addEventListener("click", () => toggleInfo(el));
+      el.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleInfo(el); }
+      });
+    });
+
+    // ── Steps help dialog ──────────────────────────────────────────────────────
+    const $help    = document.getElementById("help");
+    const $helpBtn = document.getElementById("help-btn");
+
+    function openHelp() {
+      hideTip();
+      $help.hidden = false;
+      $help.querySelector(".help-card").focus();
+    }
+
+    function closeHelp() {
+      $help.hidden = true;
+      $helpBtn.focus();
+    }
+
+    $helpBtn.addEventListener("click", openHelp);
+    document.getElementById("help-close").addEventListener("click", closeHelp);
+    document.getElementById("help-done").addEventListener("click", closeHelp);
+    document.getElementById("help-backdrop").addEventListener("click", closeHelp);
 
     // ── Event listeners ────────────────────────────────────────────────────────
     $startBtn.addEventListener("click", handleStart);
     $fsStartBtn.addEventListener("click", handleStart);
-    document.getElementById("reset-btn").addEventListener("click", handleReset);
+    $resetBtn.addEventListener("click", handleResetClick);
     document.getElementById("fullscreen-btn").addEventListener("click", enterFullscreen);
-    document.getElementById("fs-exit-btn").addEventListener("click", exitFullscreen);
+    $fsExitBtn.addEventListener("click", exitFullscreen);
 
     $readingToggle.addEventListener("click", toggleReading);
-    $readingToggleLabel.addEventListener("click", toggleReading);
+    $groupToggle.addEventListener("click", toggleGroup);
 
-    document.getElementById("custom-exam-btn").addEventListener("click", handleCustomExam);
-    $customExamInput.addEventListener("keydown", e => { if (e.key === "Enter") handleCustomExam(); });
+    const customExam    = () => handleCustom($customExamInput, s => { examTotal = s; });
+    const customReading = () => handleCustom($customReadingInput, s => { readingTotal = s; });
+    const customGroup   = () => handleCustom($customGroupInput, s => { group2Total = s; });
 
-    document.getElementById("custom-reading-btn").addEventListener("click", handleCustomReading);
-    $customReadingInput.addEventListener("keydown", e => { if (e.key === "Enter") handleCustomReading(); });
+    document.getElementById("custom-exam-btn").addEventListener("click", customExam);
+    $customExamInput.addEventListener("keydown", e => { if (e.key === "Enter") customExam(); });
+    document.getElementById("custom-reading-btn").addEventListener("click", customReading);
+    $customReadingInput.addEventListener("keydown", e => { if (e.key === "Enter") customReading(); });
+    document.getElementById("custom-group-btn").addEventListener("click", customGroup);
+    $customGroupInput.addEventListener("keydown", e => { if (e.key === "Enter") customGroup(); });
+
+    $subjectInput.addEventListener("input", () => { save(); render(); });
+    $groupNameInput.addEventListener("input", () => { save(); render(); });
 
     // ── Initial render ─────────────────────────────────────────────────────────
-    updateReadingDisplay();
+    load();
+    syncSettingsUI();
     render();
+    updateWakeLock();
+    setInterval(tick, 250);
   </script>
 </body>
 </html>
