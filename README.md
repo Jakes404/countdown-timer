@@ -15,8 +15,8 @@ Current version: **1.7** (shown bottom left on the page, `#version-tag`).
 |---|---|
 | This repo, `index.html` | **Source of truth.** Make changes here. |
 | Kompas Tools page `/t/aftelhorlosie` | Live copy, embedded on the school website. Re-upload `index.html` in Kompas after every change. |
-| `AHMP/tools/aftelhorlosie-standalone.html` (local) | Old copy (pre-1.7). Don't edit; replace or delete. |
-| `vibe-code-tools/countdown-timer.html` | Old 1.7 copy (before the two-group update). |
+| `AHMP/tools/aftelhorlosie-standalone.html` (local, not in git) | Copy of this repo's `index.html`. Don't edit; copy over it after changes. |
+| [`vibe-code-tools/countdown-timer.html`](https://github.com/Jakes404/vibe-code-tools) | Copy of this repo's `index.html` with CRLF line endings. Don't edit; copy over it after changes. |
 | `tools-platform/public/countdown.html` | Separate, older rewrite. Not kept in sync. |
 
 ## Features
