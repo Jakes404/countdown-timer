@@ -322,6 +322,25 @@
     #start-btn.paused { background: var(--gray-800); }
     #start-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+    /* +5 / −5 min during exam time: beside the start button (one group) or in each card */
+    .adjust-btn {
+      padding: 10px 16px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 12px;
+      border: 2px solid var(--blue-border);
+      background: white;
+      color: var(--blue);
+      cursor: pointer;
+      font-family: var(--font-body);
+      white-space: nowrap;
+      transition: background 0.15s, opacity 0.2s;
+    }
+    .adjust-btn:hover:not(:disabled) { background: var(--blue-light); }
+    .adjust-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .adjust { display: flex; gap: 8px; justify-content: center; }
+    .card .adjust-btn { margin-top: 10px; padding: 6px 12px; font-size: 14px; border-radius: 10px; }
+
     .divider {
       width: 100%;
       border: none;
@@ -731,6 +750,10 @@
     }
     #fs-cards .card-clock.done { font-size: clamp(32px, 5vw, 80px); letter-spacing: -1px; padding: 0; }
     #fs-cards .card-sub { font-size: clamp(16px, 2vw, 26px); min-height: 32px; }
+    #fs-cards .adjust-btn { font-size: clamp(14px, 1.6vw, 20px); }
+    /* The card +/− buttons fade with the other fullscreen controls */
+    #fs-cards .adjust { transition: opacity 0.5s ease; }
+    #fullscreen-overlay.idle #fs-cards .adjust { opacity: 0; pointer-events: none; }
     @media (max-width: 520px) {
       #fs-cards { grid-template-columns: 1fr 1fr; }
     }
@@ -738,10 +761,14 @@
     /* Fullscreen pause btn fades */
     #fs-controls {
       margin-top: clamp(24px, 5vh, 56px);
+      display: flex;
+      align-items: center;
+      gap: 20px;
       opacity: 1;
       transition: opacity 0.5s ease;
       pointer-events: auto;
     }
+    #fs-controls .adjust-btn { font-size: 20px; padding: 14px 22px; border-radius: 14px; }
     #fs-controls.hidden {
       opacity: 0;
       pointer-events: none;
@@ -968,7 +995,7 @@
         <div class="card"><p class="card-name"></p><div class="card-clock"></div><p class="card-sub"></p></div>
       </div>
 
-      <div class="controls">
+      <div class="controls" id="controls">
         <button id="start-btn" aria-label="Begin" data-tip="Begin die aftelling. Klik weer om te pouseer en te hervat. Die spasiebalk werk ook."><svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg><span>Begin</span></button>
       </div>
     </section>
@@ -1062,7 +1089,7 @@
 
   </div>
 
-  <span id="version-tag">Version 1.7</span>
+  <span id="version-tag">Version 1.8</span>
 
   <!-- ══ HELP ══ -->
   <div id="help" hidden>
@@ -1079,6 +1106,7 @@
         <li><strong>Twee groepe (as nodig).</strong> Skryf twee vakke saam met verskillende tye, soos English HL en FAL? Skakel Tweede groep aan, gee dit 'n naam en kies sy tyd. Albei begin saam.</li>
         <li><strong>Volskerm en Begin.</strong> Klik op Volskerm vir die projektor en dan op Begin, of druk die spasiebalk.</li>
         <li><strong>Tydens die toets.</strong> Pouseer en hervat met dieselfde knoppie. Die tye is gesluit sodat niks per ongeluk verander nie. As die blad herlaai, loop die horlosie voort waar dit was.</li>
+        <li><strong>Ekstra tyd.</strong> Het die leerders meer tyd nodig? Klik +5 min onder die horlosie. Met twee groepe het elke groep sy eie knoppie. Per ongeluk geklik? Klik −5 min.</li>
         <li><strong>Klaar.</strong> Klik op Herstel om van voor af te begin. Terwyl die horlosie loop, klik twee keer.</li>
       </ol>
       <p class="help-sub">Wat die kleure beteken</p>
@@ -1105,6 +1133,7 @@
     const READING_PRESETS = [5, 10, 15, 20];
     const WARNING_MARKS = [30, 15, 5];       // minutes left that trigger a warning
     const WARNING_SECS  = 20;                // how long each warning stays visible
+    const EXTRA_MINS    = 5;                 // minutes per +/− click during the exam
     const DEFAULT_NAME  = "AHMP Aftelhorlosie";
     const STORE_KEY     = "ahmp-aftelhorlosie";
     const STALE_MS      = 12 * 3600 * 1000;  // ignore saved state older than this
@@ -1124,6 +1153,9 @@
     let running      = false;
     let banked       = 0;   // ms elapsed in previous runs (before the last pause)
     let runStartedAt = 0;   // wall-clock ms when the current run started
+    // Time added during the exam, per group (seconds). Kept apart from the exam
+    // times so Herstel drops it and the colour thresholds keep the planned length.
+    let extraSecs    = [0, 0];
 
     let isFullscreen = false;
     let mouseTimer   = null;
@@ -1166,12 +1198,20 @@
     function readingMs() { return readingEnabled ? readingTotal * 1000 : 0; }
 
     function groups() {
-      const list = [{ name: $subjectInput.value.trim(), total: examTotal }];
-      if (group2Enabled) list.push({ name: $groupNameInput.value.trim(), total: group2Total });
+      const list = [{ name: $subjectInput.value.trim(), total: examTotal, extra: extraSecs[0] }];
+      if (group2Enabled) list.push({ name: $groupNameInput.value.trim(), total: group2Total, extra: extraSecs[1] });
       return list;
     }
 
-    function groupEndMs(g) { return readingMs() + g.total * 1000; }
+    function groupEndMs(g) { return readingMs() + (g.total + g.extra) * 1000; }
+
+    // Extra time can be added during exam time until that group's time is up,
+    // and taken off again as long as the group still has time left afterwards.
+    function canAddExtra(g, el) { return started && el >= readingMs() && el < groupEndMs(g); }
+    function canRemoveExtra(g, el) {
+      const step = EXTRA_MINS * 60;
+      return canAddExtra(g, el) && g.extra >= step && groupEndMs(g) - el > step * 1000;
+    }
 
     function isAllDone() {
       return started && elapsed() >= Math.max(...groups().map(groupEndMs));
@@ -1223,23 +1263,54 @@
     const $groupNameInput = document.getElementById("group-name-input");
     const $customGroupInput = document.getElementById("custom-group-input");
 
-    function viewRefs(phaseId, clockId, subId, cardsId) {
+    // A −/+ pair of extra-time buttons for one group, hidden until exam time.
+    function adjustButtons(group) {
+      const make = (step, label, tip) => {
+        const btn = document.createElement("button");
+        btn.className = "adjust-btn";
+        btn.textContent = label;
+        btn.dataset.tip = tip;
+        btn.hidden = true;
+        btn.addEventListener("click", () => adjustExtra(group, step));
+        return btn;
+      };
+      return {
+        minus: make(-1, `−${EXTRA_MINS} min`, `Haal ${EXTRA_MINS} minute van die ekstra tyd af, bv. as jy per ongeluk +${EXTRA_MINS} geklik het.`),
+        plus:  make(1, `+${EXTRA_MINS} min`, `Gee ${EXTRA_MINS} minute ekstra. Die eindtyd en die waarskuwings skuif saam.`),
+      };
+    }
+
+    // One group: the pair sits either side of the start button. Two groups: a pair in each card.
+    function viewRefs(phaseId, clockId, subId, cardsId, controlsId) {
       const cards = document.getElementById(cardsId);
+      const controls = document.getElementById(controlsId);
+      const adjust = adjustButtons(0);
+      controls.prepend(adjust.minus);
+      controls.append(adjust.plus);
       return {
         phase: document.getElementById(phaseId),
         clock: document.getElementById(clockId),
         sub:   document.getElementById(subId),
+        adjust,
         cards,
-        cardEls: [...cards.querySelectorAll(".card")].map(c => ({
-          name:  c.querySelector(".card-name"),
-          clock: c.querySelector(".card-clock"),
-          sub:   c.querySelector(".card-sub"),
-        })),
+        cardEls: [...cards.querySelectorAll(".card")].map((c, i) => {
+          const adjust = adjustButtons(i);
+          const row = document.createElement("div");
+          row.className = "adjust";
+          row.append(adjust.minus, adjust.plus);
+          c.append(row);
+          return {
+            name:  c.querySelector(".card-name"),
+            clock: c.querySelector(".card-clock"),
+            sub:   c.querySelector(".card-sub"),
+            adjust,
+          };
+        }),
       };
     }
     const views = [
-      viewRefs("phase-label", "clock", "reading-sub", "cards"),
-      viewRefs("fs-phase", "fs-clock", "fs-reading-sub", "fs-cards"),
+      viewRefs("phase-label", "clock", "reading-sub", "cards", "controls"),
+      viewRefs("fs-phase", "fs-clock", "fs-reading-sub", "fs-cards", "fs-controls"),
     ];
 
     // ── Preset buttons ─────────────────────────────────────────────────────────
@@ -1291,17 +1362,22 @@
       const done     = started && el >= endMs;
       const rem      = started ? Math.max(0, Math.ceil((endMs - el) / 1000)) : g.total;
       const examTime = started && el >= readingMs() && !done;
-      const warn     = examTime ? warningText(g.total, rem) : "";
+      // Warnings count the extra time; the orange/red thresholds keep the planned length.
+      const warn     = examTime ? warningText(g.total + g.extra, rem) : "";
+      const extra    = g.extra ? `+${g.extra / 60} min bygevoeg` : "";
 
       let sub = "", subCls = "";
       if (warn) { sub = warn; subCls = "warn"; }
-      else if (examTime && running) sub = `Eindig om ${clockTime(Date.now() + endMs - el)}`;
+      else if (examTime && running) sub = [`Eindig om ${clockTime(Date.now() + endMs - el)}`, extra].filter(Boolean).join(" · ");
+      else if (examTime) sub = extra;
 
       return {
         name: g.name || (dual ? `Groep ${i + 1}` : ""),
         text: done ? "Tyd Verstreke!" : formatTime(rem),
         cls:  done ? "done" : examTime ? warnLevel(g.total, rem) : "",
         sub, subCls, warn,
+        canAdd: canAddExtra(g, el),
+        canRemove: canRemoveExtra(g, el),
       };
     }
 
@@ -1314,6 +1390,13 @@
       }
       if (gs.length === 1) return `Toetstyd daarna: ${formatTime(gs[0].total)}`;
       return "Daarna: " + gs.map((g, i) => `${label(g, i)} ${formatTime(g.total)}`).join(" · ");
+    }
+
+    // Show a group's −/+ pair while time can be added; −5 only works while there's extra to take off.
+    function setAdjust(a, c) {
+      const show = !!c && c.canAdd;
+      a.minus.hidden = a.plus.hidden = !show;
+      a.minus.disabled = !(show && c.canRemove);
     }
 
     function render() {
@@ -1362,6 +1445,7 @@
           setText(v.sub, main.sub);
           setClass(v.sub, main.subCls);
         }
+        setAdjust(v.adjust, showCards || showReading ? null : cards[0]);
 
         v.cards.classList.toggle("visible", showCards);
         if (showCards) {
@@ -1372,6 +1456,7 @@
             setClass(ce.clock, "card-clock" + (c.cls ? " " + c.cls : ""));
             setText(ce.sub, c.sub);
             setClass(ce.sub, "card-sub" + (c.subCls ? " " + c.subCls : ""));
+            setAdjust(ce.adjust, c);
           });
         }
       });
@@ -1459,10 +1544,21 @@
       running = false;
       banked = 0;
       runStartedAt = 0;
+      extraSecs = [0, 0];
       $subjectInput.value = "";
       $groupNameInput.value = "";
       save();
       updateWakeLock();
+      render();
+    }
+
+    // +5 / −5 min for one group (step 1 or −1).
+    function adjustExtra(i, step) {
+      const g = groups()[i];
+      const el = elapsed();
+      if (!g || !(step > 0 ? canAddExtra(g, el) : canRemoveExtra(g, el))) return;
+      extraSecs[i] += step * EXTRA_MINS * 60;
+      save();
       render();
     }
 
@@ -1529,7 +1625,7 @@
           v: 1, savedAt: Date.now(),
           examTotal, group2Enabled, group2Total, readingEnabled, readingTotal,
           name1: $subjectInput.value, name2: $groupNameInput.value,
-          started, running, banked, runStartedAt,
+          started, running, banked, runStartedAt, extraSecs,
         }));
       } catch (_) {}
     }
@@ -1551,6 +1647,9 @@
           running = s.running === true;
           banked = Math.max(0, s.banked);
           runStartedAt = s.runStartedAt;
+          if (Array.isArray(s.extraSecs)) {
+            extraSecs = [0, 1].map(i => Number.isInteger(s.extraSecs[i]) && s.extraSecs[i] > 0 ? s.extraSecs[i] : 0);
+          }
         }
       } catch (_) {}
     }

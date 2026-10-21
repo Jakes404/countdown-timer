@@ -7,7 +7,7 @@ fall back to system fonts when offline.
 
 The interface is in Afrikaans; this README and the code comments are in English.
 
-Current version: **1.7** (shown bottom left on the page, `#version-tag`).
+Current version: **1.8** (shown bottom left on the page, `#version-tag`).
 
 ## Where it lives
 
@@ -29,6 +29,15 @@ Current version: **1.7** (shown bottom left on the page, `#version-tag`).
   starts both; pause pauses both; reading time is shared. Each group gets its
   own clock, name and "Eindig om HH:MM" end time. When one group finishes, its
   clock shows "Tyd Verstreke!" while the other keeps running.
+- **Extra time** (+5 min / −5 min): during exam time, +5 min adds 5 minutes and
+  −5 min takes them off again after a mistaken click. One group: the buttons sit
+  either side of the pause button. Two groups: each card has its own pair. They
+  also show in fullscreen (and hide with the other controls). The buttons
+  disappear once that group's time is up. −5 only works while there is added
+  time to take off and the group would still have time left. The clock shows
+  "+5 min bygevoeg" next to the end time. The "Nog … minute" warnings and the
+  orange/red colours follow the new time left; whether the exam counts as
+  short (under 45 min) still goes by the planned length. Herstel drops it.
 - **Fullscreen** (Volskerm): clock only, sized for a projector. The exit and
   pause buttons and the cursor hide after 3 s without movement; moving the mouse
   or tapping shows them again.
@@ -36,14 +45,15 @@ Current version: **1.7** (shown bottom left on the page, `#version-tag`).
   orange in the last 15 min and red in the last 5 min (for exams shorter than
   45 min: 5 min and 1 min).
 - **Safety during an exam**:
-  - Time settings are locked once Begin is pressed (until Herstel).
+  - Time settings are locked once Begin is pressed (until Herstel). Extra time
+    goes through the +5 / −5 buttons instead.
   - Herstel needs a second click within 4 s while a timer is running. This is an
     in-page confirmation, not `confirm()`, because sandboxed iframes may block
     modals.
   - The screen is kept awake (Screen Wake Lock API) while running.
   - The timer survives a refresh, a crash or a closed tab (see *Saved state*).
 - **Help**:
-  - The Hulp button opens a 7-step guide with a colour key.
+  - The Hulp button opens an 8-step guide with a colour key.
   - "i" buttons explain Toetstyd, Leestyd and Tweede groep (hover, or tap on
     touchscreens).
   - Most controls show a hover tip (`data-tip` attribute).
@@ -69,7 +79,9 @@ can't drift when the browser throttles timers:
 - `elapsed() = banked + (running ? Date.now() - runStartedAt : 0)`.
 
 Reading time and every group share that one elapsed value. A group ends at
-`readingMs + group.total`, and its time left is that end minus `elapsed()`.
+`readingMs + group.total + group.extra`, and its time left is that end minus
+`elapsed()`. `extraSecs` holds the time added per group; it's kept apart from
+`examTotal` / `group2Total` so Herstel drops it and the presets stay as set.
 `tick()` runs every 250 ms: it stops the timer once every group is done, then
 calls `render()`. The display is fully derived from state, and `setText` /
 `setClass` / `setHTML` only touch the DOM when a value changes.
@@ -88,7 +100,7 @@ the fullscreen overlay (`views[]`). The single big clock shows reading time, or
 the only group's time. The two-card layout (`.cards`) is used when the second
 group is on and reading time is over or off.
 
-**Saved state.** Settings, names and timer state are saved to `localStorage`
+**Saved state.** Settings, names, timer state and extra time are saved to `localStorage`
 under `ahmp-aftelhorlosie` on every change. They're restored on load and ignored
 if older than 12 hours. All storage access is wrapped in `try/catch`, so the
 timer still works where storage is blocked (e.g. a sandboxed iframe without
@@ -104,6 +116,7 @@ The settings are constants near the top of the script:
 | `READING_PRESETS` | Reading time buttons (minutes). |
 | `WARNING_MARKS` | Minutes left that show a "Nog … minute" warning. |
 | `WARNING_SECS` | How long each warning shows. |
+| `EXTRA_MINS` | Minutes per +/− click (button labels and tips follow it). |
 | `STORE_KEY`, `STALE_MS` | Saved-state key and maximum age. |
 | `warnLevel()` | Orange and red thresholds. |
 
@@ -124,10 +137,15 @@ Serve the file locally (e.g. `python3 -m http.server`) and check:
    are right, and the first group shows "Tyd Verstreke!" while the second keeps
    going.
 4. Refresh the page while running and while paused: the time carries on correctly.
-5. Volskerm: the controls and cursor hide after 3 s; Esc and Verlaat exit.
-6. Window widths of about 1440, 800 and 375px: nothing overflows, and the
+5. Extra time: +5 moves the clock and end time on; −5 takes it back and is
+   greyed out with no added time or under 5 min left; the buttons go when the
+   time is up; with two groups each card's buttons only change that group;
+   Herstel clears it and the preset stays as set.
+6. Volskerm: the controls (including +5 / −5) and cursor hide after 3 s; Esc and
+   Verlaat exit.
+7. Window widths of about 1440, 800 and 375px: nothing overflows, and the
    settings sit beside the clock only at 1000px and wider.
-7. After uploading to Kompas, repeat steps 1 and 4 inside the embed.
+8. After uploading to Kompas, repeat steps 1, 4 and 5 inside the embed.
 
 To fast-forward in the browser console: `runStartedAt -= 10 * 60000` jumps
 10 minutes ahead.
