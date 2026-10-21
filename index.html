@@ -22,6 +22,10 @@
       --pink-border: #f7aed8;
       --pink-soft: #fde3f1;
       --pink-btn: #f49ccc;
+      --violet: #7c3aed;
+      --violet-dark: #6d28d9;
+      --violet-light: #f5f3ff;
+      --violet-border: #c4b5fd;
       --green: #22c55e;
       --orange: #f97316;
       --red: #ef4444;
@@ -341,6 +345,62 @@
     .adjust { display: flex; gap: 8px; justify-content: center; }
     .card .adjust-btn { margin-top: 10px; padding: 6px 12px; font-size: 14px; border-radius: 10px; }
 
+    /* Extra time (concession): a row of smaller violet clocks under each group's
+       time, one per rate. --n is the number of clocks; they shrink to fit a row. */
+    .conc-row {
+      margin: 0 0 16px;
+      text-align: center;
+      color: var(--violet);
+    }
+    .conc-head {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .conc-boxes {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    .conc {
+      border: 2px solid var(--violet-border);
+      border-radius: 12px;
+      padding: 6px 16px;
+      min-width: 0;
+    }
+    .conc-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .conc-clock {
+      display: block;
+      font-family: var(--font-display);
+      font-feature-settings: var(--font-feature-clock);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -1px;
+      margin: 4px 0;
+      user-select: none;
+      transition: color 0.4s;
+      font-size: clamp(26px, min(9cqi, calc(20cqi / var(--n, 1))), 80px);
+    }
+    .conc-clock.low { color: var(--orange); }
+    .conc-clock.very-low, .conc-clock.done { color: var(--red); }
+    .conc-clock.done { font-size: clamp(18px, 3.5cqi, 30px); letter-spacing: 0; }
+    .conc-sub { display: block; font-size: 13px; font-weight: 600; color: var(--gray-500); min-height: 18px; }
+    .card .conc-row { margin: 10px 0 0; }
+    .card .conc-boxes { gap: 6px; }
+    .card .conc { padding: 4px 8px; }
+    .card .conc-clock { font-size: clamp(20px, min(6cqi, calc(10cqi / var(--n, 1))), 56px); }
+    .card .conc-clock.done { font-size: clamp(14px, 2.5cqi, 22px); }
+
     .divider {
       width: 100%;
       border: none;
@@ -620,6 +680,38 @@
       font-weight: 700;
     }
 
+    /* Extra time (concession) panel */
+    #concession-panel.enabled {
+      background: var(--violet-light);
+      border-color: var(--violet-border);
+    }
+    #concession-toggle[aria-checked="true"] .toggle-track { background: var(--violet); }
+    #concession-toggle[aria-checked="true"] .toggle-label { color: var(--violet-dark); }
+    #concession-panel .presets { justify-content: flex-start; }
+    #concession-panel .preset-btn:hover { border-color: var(--violet-border); }
+    /* Several rates can be on at once, so "on" is a filled button */
+    #concession-panel .preset-btn.active {
+      background: var(--violet);
+      color: white;
+      border-color: var(--violet);
+    }
+    #concession-panel .custom-row { margin-bottom: 0; }
+    #concession-panel .set-btn { background: var(--violet); }
+    #concession-panel .set-btn:hover { background: var(--violet-dark); }
+    #concession-hint {
+      font-size: 13px;
+      color: var(--violet-dark);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    #concession-summary {
+      font-size: 13px;
+      color: var(--gray-500);
+      margin-top: 10px;
+      line-height: 1.5;
+      white-space: pre-line;
+    }
+
     /* ══════════════════════════════════════════
        FULLSCREEN OVERLAY
     ══════════════════════════════════════════ */
@@ -751,6 +843,19 @@
     #fs-cards .card-clock.done { font-size: clamp(32px, 5vw, 80px); letter-spacing: -1px; padding: 0; }
     #fs-cards .card-sub { font-size: clamp(16px, 2vw, 26px); min-height: 32px; }
     #fs-cards .adjust-btn { font-size: clamp(14px, 1.6vw, 20px); }
+    #fullscreen-overlay .conc-row { margin: 16px 0 0; }
+    #fullscreen-overlay .conc-head { font-size: clamp(13px, 1.6vw, 20px); }
+    #fullscreen-overlay .conc-boxes { gap: clamp(10px, 1.5vw, 24px); }
+    #fullscreen-overlay .conc { padding: 8px clamp(14px, 2vw, 28px); }
+    #fullscreen-overlay .conc-label { font-size: clamp(13px, 1.6vw, 22px); }
+    #fullscreen-overlay .conc-clock { font-size: clamp(28px, min(calc(20vw / var(--n, 1)), 11vh), 120px); }
+    /* One group with extra time: on short screens (e.g. 720p) shrink the big clock so both fit */
+    #fullscreen-overlay.has-conc #fs-clock:not(.done) { font-size: clamp(80px, min(28vw, 30vh), 280px); }
+    #fullscreen-overlay.has-conc #fs-clock.long { font-size: clamp(64px, min(22vw, 26vh), 280px); }
+    #fullscreen-overlay .conc-clock.done { font-size: clamp(20px, 2.5vw, 40px); }
+    #fullscreen-overlay .conc-sub { font-size: clamp(13px, 1.6vw, 22px); min-height: 0; }
+    #fs-cards .conc { padding: 6px clamp(8px, 1vw, 16px); }
+    #fs-cards .conc-clock { font-size: clamp(22px, min(calc(9vw / var(--n, 1)), 10vh), 90px); }
     /* The card +/− buttons fade with the other fullscreen controls */
     #fs-cards .adjust { transition: opacity 0.5s ease; }
     #fullscreen-overlay.idle #fs-cards .adjust { opacity: 0; pointer-events: none; }
@@ -1060,6 +1165,26 @@
           </div>
         </div>
 
+        <!-- Extra time (concession) panel -->
+        <div class="panel" id="concession-panel">
+          <div class="panel-head">
+            <button type="button" class="toggle-row" id="concession-toggle" role="switch" aria-checked="false">
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              <span class="toggle-label"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>Ekstra tyd vir sekere leerders</span>
+            </button>
+            <span class="info-btn" role="button" tabindex="0" aria-label="Meer oor ekstra tyd" data-tip="Vir leerders wat ekstra tyd kry, bv. weens mediese redes. Kies hoeveel minute ekstra per uur toetstyd. Kry leerders verskillende tye, bv. 15 en 25 min per uur? Kies albei. Elke tyd kry sy eie kleiner pers horlosie wat wys hoe laat hulle klaar moet wees."><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
+          </div>
+          <div class="panel-body" id="concession-body">
+            <p id="concession-hint">Minute ekstra per uur. Kies een of meer.</p>
+            <div class="presets" id="concession-presets"></div>
+            <div class="custom-row">
+              <input class="custom-input" id="custom-concession-input" type="number" min="1" placeholder="Spesifiseer min" aria-label="Ekstra minute per uur" data-tip="Tik hoeveel minute ekstra per uur en druk Enter of klik Stel. Dit word by die ander tye gevoeg." />
+              <button class="set-btn" id="custom-concession-btn">Voeg by</button>
+            </div>
+            <p id="concession-summary"></p>
+          </div>
+        </div>
+
       </fieldset>
     </aside>
 
@@ -1089,7 +1214,7 @@
 
   </div>
 
-  <span id="version-tag">Version 1.8</span>
+  <span id="version-tag">Version 1.9</span>
 
   <!-- ══ HELP ══ -->
   <div id="help" hidden>
@@ -1104,15 +1229,17 @@
         <li><strong>Kies die toetstyd.</strong> Klik op 'n tyd, of tik jou eie minute en klik Stel.</li>
         <li><strong>Leestyd (as nodig).</strong> Skakel Leestyd aan as die leerders eers mag lees. Die toetstyd begin vanself daarna.</li>
         <li><strong>Twee groepe (as nodig).</strong> Skryf twee vakke saam met verskillende tye, soos English HL en FAL? Skakel Tweede groep aan, gee dit 'n naam en kies sy tyd. Albei begin saam.</li>
+        <li><strong>Ekstra tyd vir sekere leerders (as nodig).</strong> Kry sommige leerders ekstra tyd, bv. weens mediese redes? Skakel dit aan en kies hoeveel minute per uur. Kry leerders verskillende tye, bv. 15 en 25 min per uur? Kies albei. Elke tyd kry sy eie kleiner pers horlosie wat wys hoe laat hulle klaar moet wees.</li>
         <li><strong>Volskerm en Begin.</strong> Klik op Volskerm vir die projektor en dan op Begin, of druk die spasiebalk.</li>
         <li><strong>Tydens die toets.</strong> Pouseer en hervat met dieselfde knoppie. Die tye is gesluit sodat niks per ongeluk verander nie. As die blad herlaai, loop die horlosie voort waar dit was.</li>
-        <li><strong>Ekstra tyd.</strong> Het die leerders meer tyd nodig? Klik +5 min onder die horlosie. Met twee groepe het elke groep sy eie knoppie. Per ongeluk geklik? Klik −5 min.</li>
+        <li><strong>Meer tyd gee.</strong> Het die leerders meer tyd nodig? Klik +5 min onder die horlosie. Met twee groepe het elke groep sy eie knoppie. Per ongeluk geklik? Klik −5 min.</li>
         <li><strong>Klaar.</strong> Klik op Herstel om van voor af te begin. Terwyl die horlosie loop, klik twee keer.</li>
       </ol>
       <p class="help-sub">Wat die kleure beteken</p>
       <ul class="help-colours">
         <li><span class="dot" style="background:var(--blue)"></span>Toetstyd loop</li>
         <li><span class="dot" style="background:var(--pink)"></span>Leestyd</li>
+        <li><span class="dot" style="background:var(--violet)"></span>Ekstra tyd</li>
         <li><span class="dot" style="background:var(--orange)"></span>Laaste 15 minute</li>
         <li><span class="dot" style="background:var(--red)"></span>Laaste 5 minute</li>
       </ul>
@@ -1131,6 +1258,7 @@
     // ── Settings ───────────────────────────────────────────────────────────────
     const PRESETS = [30, 45, 60, 90, 120, 150, 180];
     const READING_PRESETS = [5, 10, 15, 20];
+    const CONCESSION_PRESETS = [5, 10, 15, 20, 25, 30];  // extra minutes per hour of exam time
     const WARNING_MARKS = [30, 15, 5];       // minutes left that trigger a warning
     const WARNING_SECS  = 20;                // how long each warning stays visible
     const EXTRA_MINS    = 5;                 // minutes per +/− click during the exam
@@ -1143,6 +1271,8 @@
     let group2Total    = 60 * 60;   // group 2 (seconds)
     let readingEnabled = false;
     let readingTotal   = 10 * 60;
+    let concessionEnabled = false;
+    let concessionRates   = [10 * 60];  // extra seconds per hour of exam time; one clock per rate
 
     // ── Timer state ────────────────────────────────────────────────────────────
     // Time is measured from the wall clock, never by counting ticks, so the
@@ -1213,8 +1343,22 @@
       return canAddExtra(g, el) && g.extra >= step && groupEndMs(g) - el > step * 1000;
     }
 
+    // Learners with a concession get extra time in proportion to the planned exam
+    // time (not reading time). Learners can have different rates, e.g. 15 and 25 min
+    // per hour; each rate gets its own clock. It runs on from the group's end, so
+    // +5 / −5 moves it too.
+    function activeRates() { return concessionEnabled ? concessionRates : []; }
+    function concessionSecs(g, rate) { return Math.round(g.total * rate / 3600); }
+    function concessionEndMs(g, rate) { return groupEndMs(g) + concessionSecs(g, rate) * 1000; }
+    function lastEndMs(g) { return Math.max(groupEndMs(g), ...activeRates().map(r => concessionEndMs(g, r))); }
+
     function isAllDone() {
-      return started && elapsed() >= Math.max(...groups().map(groupEndMs));
+      return started && elapsed() >= Math.max(...groups().map(lastEndMs));
+    }
+
+    function formatMins(secs) {
+      const m = Math.floor(secs / 60), s = secs % 60;
+      return s ? `${m} min ${s} s` : `${m} min`;
     }
 
     // Long exams warn earlier; short ones would otherwise be orange throughout.
@@ -1263,6 +1407,12 @@
     const $groupNameInput = document.getElementById("group-name-input");
     const $customGroupInput = document.getElementById("custom-group-input");
 
+    const $concessionPanel   = document.getElementById("concession-panel");
+    const $concessionBody    = document.getElementById("concession-body");
+    const $concessionToggle  = document.getElementById("concession-toggle");
+    const $concessionSummary = document.getElementById("concession-summary");
+    const $customConcessionInput = document.getElementById("custom-concession-input");
+
     // A −/+ pair of extra-time buttons for one group, hidden until exam time.
     function adjustButtons(group) {
       const make = (step, label, tip) => {
@@ -1280,17 +1430,30 @@
       };
     }
 
+    // The row of smaller extra-time (concession) clocks, placed after a group's sub
+    // line. setConcRow() adds one clock per rate.
+    function concRow(after) {
+      const el = document.createElement("div");
+      el.className = "conc-row";
+      el.hidden = true;
+      el.innerHTML = '<span class="conc-head">Ekstra tyd</span><div class="conc-boxes"></div>';
+      after.after(el);
+      return { el, boxesEl: el.querySelector(".conc-boxes"), boxes: [] };
+    }
+
     // One group: the pair sits either side of the start button. Two groups: a pair in each card.
     function viewRefs(phaseId, clockId, subId, cardsId, controlsId) {
       const cards = document.getElementById(cardsId);
       const controls = document.getElementById(controlsId);
+      const sub = document.getElementById(subId);
       const adjust = adjustButtons(0);
       controls.prepend(adjust.minus);
       controls.append(adjust.plus);
       return {
         phase: document.getElementById(phaseId),
         clock: document.getElementById(clockId),
-        sub:   document.getElementById(subId),
+        sub,
+        conc: concRow(sub),
         adjust,
         cards,
         cardEls: [...cards.querySelectorAll(".card")].map((c, i) => {
@@ -1303,6 +1466,7 @@
             name:  c.querySelector(".card-name"),
             clock: c.querySelector(".card-clock"),
             sub:   c.querySelector(".card-sub"),
+            conc:  concRow(c.querySelector(".card-sub")),
             adjust,
           };
         }),
@@ -1330,6 +1494,29 @@
     const $presetsWrap        = buildPresets("presets", PRESETS, "preset-btn", s => { examTotal = s; settingsChanged(); });
     const $readingPresetsWrap = buildPresets("reading-presets", READING_PRESETS, "reading-preset-btn", s => { readingTotal = s; settingsChanged(); });
     const $groupPresetsWrap   = buildPresets("group-presets", PRESETS, "preset-btn", s => { group2Total = s; settingsChanged(); });
+    const $concessionPresetsWrap = document.getElementById("concession-presets");
+
+    // Extra-time rate buttons: the presets plus any custom rate. Each one switches
+    // its rate on or off; the buttons are only rebuilt when the set changes.
+    function syncConcessionButtons() {
+      const all = [...new Set([...CONCESSION_PRESETS.map(m => m * 60), ...concessionRates])].sort((a, b) => a - b);
+      if ($concessionPresetsWrap.dataset.rates !== all.join()) {
+        $concessionPresetsWrap.dataset.rates = all.join();
+        $concessionPresetsWrap.replaceChildren(...all.map(secs => {
+          const btn = document.createElement("button");
+          btn.className = "preset-btn";
+          btn.textContent = `${secs / 60} min`;
+          btn.dataset.minutes = secs / 60;
+          btn.addEventListener("click", () => toggleRate(secs));
+          return btn;
+        }));
+      }
+      $concessionPresetsWrap.querySelectorAll("button").forEach(btn => {
+        const on = concessionRates.includes(btn.dataset.minutes * 60);
+        btn.classList.toggle("active", on);
+        btn.setAttribute("aria-pressed", String(on));
+      });
+    }
 
     function markActive(wrap, totalSecs) {
       wrap.querySelectorAll("button").forEach(btn => {
@@ -1342,6 +1529,7 @@
       markActive($presetsWrap, examTotal);
       markActive($readingPresetsWrap, readingTotal);
       markActive($groupPresetsWrap, group2Total);
+      syncConcessionButtons();
 
       $readingToggle.setAttribute("aria-checked", String(readingEnabled));
       $readingPanel.classList.toggle("enabled", readingEnabled);
@@ -1352,6 +1540,10 @@
       $groupPanel.classList.toggle("enabled", group2Enabled);
       $groupBody.classList.toggle("visible", group2Enabled);
       $groupDisplay.textContent = `= ${Math.round(group2Total / 60)} min`;
+
+      $concessionToggle.setAttribute("aria-checked", String(concessionEnabled));
+      $concessionPanel.classList.toggle("enabled", concessionEnabled);
+      $concessionBody.classList.toggle("visible", concessionEnabled);
 
       $subjectInput.placeholder = group2Enabled ? "Groep 1 se naam (bv. English FAL)" : "Toets Naam Hier";
     }
@@ -1378,6 +1570,23 @@
         sub, subCls, warn,
         canAdd: canAddExtra(g, el),
         canRemove: canRemoveExtra(g, el),
+        concs: activeRates().map(rate => concView(g, el, rate)),
+      };
+    }
+
+    // An extra-time clock keeps running after the group's own time is up.
+    function concView(g, el, rate) {
+      const secs  = concessionSecs(g, rate);
+      const endMs = concessionEndMs(g, rate);
+      const done  = started && el >= endMs;
+      const rem   = started ? Math.max(0, Math.ceil((endMs - el) / 1000)) : g.total + g.extra + secs;
+      const live  = started && el >= readingMs() && !done;
+      return {
+        label: `${rate / 60} min/uur`,
+        text: done ? "Tyd Verstreke!" : formatTime(rem),
+        cls:  done ? "done" : live ? warnLevel(g.total + secs, rem) : "",
+        sub:  !started ? `${formatMins(secs)} ekstra`
+            : live && running ? `Eindig om ${clockTime(Date.now() + endMs - el)}` : "",
       };
     }
 
@@ -1397,6 +1606,27 @@
       const show = !!c && c.canAdd;
       a.minus.hidden = a.plus.hidden = !show;
       a.minus.disabled = !(show && c.canRemove);
+    }
+
+    function setConcRow(r, list) {
+      r.el.hidden = !list || !list.length;
+      if (r.el.hidden) return;
+      while (r.boxes.length < list.length) {
+        const box = document.createElement("div");
+        box.className = "conc";
+        box.innerHTML = '<span class="conc-label"></span><span class="conc-clock"></span><span class="conc-sub"></span>';
+        r.boxesEl.append(box);
+        r.boxes.push({ box, label: box.children[0], clock: box.children[1], sub: box.children[2] });
+      }
+      while (r.boxes.length > list.length) r.boxes.pop().box.remove();
+      r.el.style.setProperty("--n", list.length);
+      list.forEach((c, i) => {
+        const b = r.boxes[i];
+        setText(b.label, c.label);
+        setText(b.clock, c.text);
+        setClass(b.clock, "conc-clock" + (c.cls ? " " + c.cls : ""));
+        setText(b.sub, c.sub);
+      });
     }
 
     function render() {
@@ -1423,10 +1653,12 @@
         main = cards[0];
       }
 
+      const onlyConcLeft = started && el >= Math.max(...gs.map(groupEndMs));
       const phaseText = allDone ? ""
         : !started ? "Gereed"
         : !running ? "Gepouseer"
         : inReading ? "Leestyd — eindig in…"
+        : onlyConcLeft ? "Ekstra tyd — eindig in…"
         : "Toetstyd — eindig in…";
       const phaseCls = inReading ? "reading" : "";
 
@@ -1446,6 +1678,7 @@
           setClass(v.sub, main.subCls);
         }
         setAdjust(v.adjust, showCards || showReading ? null : cards[0]);
+        setConcRow(v.conc, showCards || showReading ? null : cards[0].concs);
 
         v.cards.classList.toggle("visible", showCards);
         if (showCards) {
@@ -1457,9 +1690,17 @@
             setText(ce.sub, c.sub);
             setClass(ce.sub, "card-sub" + (c.subCls ? " " + c.subCls : ""));
             setAdjust(ce.adjust, c);
+            setConcRow(ce.conc, c.concs);
           });
         }
       });
+
+      $fsOverlay.classList.toggle("has-conc", activeRates().length > 0 && !showCards && !showReading);
+
+      // Extra-time panel: how much each group gets at each rate, one line per group.
+      setText($concessionSummary, !concessionRates.length ? "Kies hoeveel minute ekstra per uur."
+        : gs.map((g, i) => `${dual ? (g.name || `Groep ${i + 1}`) : `'n ${Math.round(g.total / 60)} min toets`} kry: `
+          + concessionRates.map(r => `${formatMins(concessionSecs(g, r))} (${r / 60} min/uur)`).join(" · ")).join("\n"));
 
       // Fullscreen heading: hidden when the cards already show the names.
       const subject = showCards ? ""
@@ -1577,6 +1818,22 @@
       }
     }
 
+    function toggleConcession() {
+      concessionEnabled = !concessionEnabled;
+      if (concessionEnabled && !concessionRates.length) concessionRates = [10 * 60];
+      settingsChanged();
+    }
+
+    function addRate(secs) {
+      if (!concessionRates.includes(secs)) concessionRates = [...concessionRates, secs].sort((a, b) => a - b);
+    }
+
+    function toggleRate(secs) {
+      if (concessionRates.includes(secs)) concessionRates = concessionRates.filter(r => r !== secs);
+      else addRate(secs);
+      settingsChanged();
+    }
+
     function toggleReading() {
       readingEnabled = !readingEnabled;
       settingsChanged();
@@ -1624,6 +1881,7 @@
         localStorage.setItem(STORE_KEY, JSON.stringify({
           v: 1, savedAt: Date.now(),
           examTotal, group2Enabled, group2Total, readingEnabled, readingTotal,
+          concessionEnabled, concessionRates,
           name1: $subjectInput.value, name2: $groupNameInput.value,
           started, running, banked, runStartedAt, extraSecs,
         }));
@@ -1638,8 +1896,12 @@
         examTotal      = secs(s.examTotal, examTotal);
         group2Total    = secs(s.group2Total, group2Total);
         readingTotal   = secs(s.readingTotal, readingTotal);
+        if (Array.isArray(s.concessionRates)) {
+          concessionRates = [...new Set(s.concessionRates.filter(r => Number.isInteger(r) && r > 0))].sort((a, b) => a - b);
+        }
         group2Enabled  = s.group2Enabled === true;
         readingEnabled = s.readingEnabled === true;
+        concessionEnabled = s.concessionEnabled === true;
         $subjectInput.value   = typeof s.name1 === "string" ? s.name1 : "";
         $groupNameInput.value = typeof s.name2 === "string" ? s.name2 : "";
         if (s.started === true && Number.isFinite(s.banked) && Number.isFinite(s.runStartedAt)) {
@@ -1814,10 +2076,12 @@
 
     $readingToggle.addEventListener("click", toggleReading);
     $groupToggle.addEventListener("click", toggleGroup);
+    $concessionToggle.addEventListener("click", toggleConcession);
 
     const customExam    = () => handleCustom($customExamInput, s => { examTotal = s; });
     const customReading = () => handleCustom($customReadingInput, s => { readingTotal = s; });
     const customGroup   = () => handleCustom($customGroupInput, s => { group2Total = s; });
+    const customConcession = () => handleCustom($customConcessionInput, addRate);
 
     document.getElementById("custom-exam-btn").addEventListener("click", customExam);
     $customExamInput.addEventListener("keydown", e => { if (e.key === "Enter") customExam(); });
@@ -1825,6 +2089,8 @@
     $customReadingInput.addEventListener("keydown", e => { if (e.key === "Enter") customReading(); });
     document.getElementById("custom-group-btn").addEventListener("click", customGroup);
     $customGroupInput.addEventListener("keydown", e => { if (e.key === "Enter") customGroup(); });
+    document.getElementById("custom-concession-btn").addEventListener("click", customConcession);
+    $customConcessionInput.addEventListener("keydown", e => { if (e.key === "Enter") customConcession(); });
 
     $subjectInput.addEventListener("input", () => { save(); render(); });
     $groupNameInput.addEventListener("input", () => { save(); render(); });
